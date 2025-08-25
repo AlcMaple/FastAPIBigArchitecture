@@ -107,7 +107,6 @@ FastAPIBigArchitecture/
 ├── static
 ├── testcase
 │   ├── conftest.py
-│   ├── test_api.py
 │   └── test_sync_api.py
 ├── utils
 │   ├── __init__.py
@@ -229,46 +228,6 @@ plugs/ 目录用于存放插件扩展，如**自定义**插件、第三方插件
 * 依赖注入模式
 * 统一错误处理
 * RESTful API 设计
-
-### 响应格式
-
-所有 API 响应统一使用 Success/Fail 格式：
-
-```python
-# 成功响应
-Success(result=data)
-
-# 失败响应
-Fail(message="错误信息")
-```
-
-## API 示例
-
-### 获取医生列表
-
-```http
-GET /api/v1/doctor_list
-```
-
-### 创建预约
-
-```http
-POST /api/v1/appointments
-Content-Type: application/json
-
-{
-    "doctor_id": 1,
-    "patient_name": "张三",
-    "patient_phone": "13800138000",
-    "appointment_date": "2024-01-15",
-    "appointment_time": "09:00"
-}
-```
-
-### 获取医生排班
-
-```http
-GET /api/v1/doctors/1/schedules?date=2024-01-15
 ```
 
 ## 开发命令
