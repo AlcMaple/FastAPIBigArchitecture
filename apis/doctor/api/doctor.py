@@ -1,0 +1,318 @@
+from fastapi import Depends, HTTPException, Query, Path
+from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Optional
+
+from ..services import DoctorService, ScheduleService, AppointmentService
+from db.database import depends_get_db_session
+from exts.responses import Success, Fail
+from . import router_doctor
+from ..schemas import AppointmentRequest, DoctorCreateRequest, DoctorUpdateRequest
+
+
+@router_doctor.get("/doctor_list", summary="获取可以预约的医生列表信息")
+async def get_doctor_list(db_session: AsyncSession = Depends(depends_get_db_session)):
+    """
+    获取可以预约的医生列表信息
+
+    :param db_session: 数据库连接依赖注入对象
+    :return: 返回可以预约的医生列表信息
+    """
+    try:
+        info = await DoctorService.get_doctor_list_infos(db_session)
+        return Success(result=info)
+    except Exception as e:
+        return Fail(message=f"获取医生列表失败: {str(e)}")
+
+
+@router_doctor.get("/doctors", summary="获取所有医生列表信息")
+async def get_all_doctors(db_session: AsyncSession = Depends(depends_get_db_session)):
+    """
+    获取所有医生列表信息
+
+    :param db_session: 数据库连接依赖注入对象
+    :return: 返回所有医生列表信息
+    """
+    try:
+        info = await DoctorService.get_all_doctors(db_session)
+        return Success(result=info)
+    except Exception as e:
+        return Fail(message=f"获取医生列表失败: {str(e)}")
+
+
+@router_doctor.get("/doctor/{doctor_id}", summary="获取医生详细信息")
+async def get_doctor_detail(
+    doctor_id: int = Path(..., description="医生ID"),
+    db_session: AsyncSession = Depends(depends_get_db_session),
+):
+    """
+    获取医生详细信息
+
+    :param doctor_id: 医生ID
+    :param db_session: 数据库连接依赖注入对象
+    :return: 返回医生详细信息
+    """
+    try:
+        doctor_info = await DoctorService.get_doctor_detail(db_session, doctor_id)
+        if not doctor_info:
+            return Fail(message="医生信息不存在", code=404)
+
+        return Success(result=doctor_info)
+    except Exception as e:
+        return Fail(message=f"获取医生信息失败: {str(e)}")
+
+
+@router_doctor.get("/doctors/department/{department}", summary="根据科室获取医生列表")
+async def get_doctors_by_department(
+    department: str = Path(..., description="科室名称"),
+    db_session: AsyncSession = Depends(depends_get_db_session),
+):
+    """
+    根据科室获取医生列表
+
+    :param department: 科室名称
+    :param db_session: 数据库连接依赖注入对象
+    :return: 返回该科室的医生列表
+    """
+    try:
+        result = await DoctorService.get_doctors_by_department(db_session, department)
+        return Success(result=result)
+    except Exception as e:
+        return Fail(message=f"获取科室医生列表失败: {str(e)}")
+
+
+@router_doctor.post("/doctor", summary="创建医生")
+async def create_doctor(
+    doctor_request: DoctorCreateRequest,
+    db_session: AsyncSession = Depends(depends_get_db_session),
+):
+    """
+    创建医生
+
+    :param doctor_request: 创建医生请求
+    :param db_session: 数据库连接依赖注入对象
+    :return: 创建的医生信息
+    """
+    try:
+        result = await DoctorService.create_doctor(db_session, doctor_request)
+        return Success(result=result, message="医生创建成功")
+    except ValueError as e:
+        return Fail(message=str(e))
+    except Exception as e:
+        return Fail(message=f"创建医生失败: {str(e)}")
+
+
+@router_doctor.put("/doctor/{doctor_id}", summary="更新医生信息")
+async def update_doctor(
+    doctor_id: int = Path(..., description="医生ID"),
+    doctor_request: DoctorUpdateRequest = None,
+    db_session: AsyncSession = Depends(depends_get_db_session),
+):
+    """
+    更新医生信息
+
+    :param doctor_id: 医生ID
+    :param doctor_request: 更新医生请求
+    :param db_session: 数据库连接依赖注入对象
+    :return: 更新后的医生信息
+    """
+    try:
+        result = await DoctorService.update_doctor(
+            db_session, doctor_id, doctor_request
+        )
+        return Success(result=result, message="医生信息更新成功")
+    except ValueError as e:
+        return Fail(message=str(e), code=404 if "不存在" in str(e) else 400)
+    except Exception as e:
+        return Fail(message=f"更新医生信息失败: {str(e)}")
+
+
+@router_doctor.delete("/doctor/{doctor_id}", summary="删除医生")
+async def delete_doctor(
+    doctor_id: int = Path(..., description="医生ID"),
+    db_session: AsyncSession = Depends(depends_get_db_session),
+):
+    """
+    删除医生
+
+    :param doctor_id: 医生ID
+    :param db_session: 数据库连接依赖注入对象
+    :return: 删除结果
+    """
+    try:
+        success = await DoctorService.delete_doctor(db_session, doctor_id)
+        return Success(result={"deleted": success}, message="医生删除成功")
+    except ValueError as e:
+        return Fail(message=str(e), code=404 if "不存在" in str(e) else 400)
+    except Exception as e:
+        return Fail(message=f"删除医生失败: {str(e)}")
+
+
+@router_doctor.get("/doctor/{doctor_id}/schedules", summary="获取医生排班信息")
+async def get_doctor_schedules(
+    doctor_id: int = Path(..., description="医生ID"),
+    days: int = Query(7, description="获取未来几天的排班", ge=1, le=30),
+    db_session: AsyncSession = Depends(depends_get_db_session),
+):
+    """
+    获取医生排班信息
+
+    :param doctor_id: 医生ID
+    :param days: 获取未来几天的排班
+    :param db_session: 数据库连接依赖注入对象
+    :return: 返回医生排班信息
+    """
+    try:
+        schedules = await ScheduleService.get_doctor_schedules(
+            db_session, doctor_id, days
+        )
+        if not schedules:
+            return Fail(message="医生信息不存在或暂无排班", code=404)
+
+        return Success(result={"schedules": schedules, "total": len(schedules)})
+    except Exception as e:
+        return Fail(message=f"获取排班信息失败: {str(e)}")
+
+
+@router_doctor.get("/doctor/{doctor_id}/appointments", summary="获取医生预约列表")
+async def get_doctor_appointments(
+    doctor_id: int = Path(..., description="医生ID"),
+    db_session: AsyncSession = Depends(depends_get_db_session),
+):
+    """
+    获取医生预约列表
+
+    :param doctor_id: 医生ID
+    :param db_session: 数据库连接依赖注入对象
+    :return: 返回医生预约列表
+    """
+    try:
+        result = await AppointmentService.get_doctor_appointments(db_session, doctor_id)
+        return Success(result=result)
+    except ValueError as e:
+        return Fail(message=str(e), code=404)
+    except Exception as e:
+        return Fail(message=f"获取预约列表失败: {str(e)}")
+
+
+@router_doctor.post("/appointment", summary="预约挂号")
+async def create_appointment(
+    appointment: AppointmentRequest,
+    db_session: AsyncSession = Depends(depends_get_db_session),
+):
+    """
+    创建预约
+
+    :param appointment: 预约信息
+    :param db_session: 数据库连接依赖注入对象
+    :return: 预约结果
+    """
+    try:
+        appointment_result = await AppointmentService.create_appointment(
+            db_session, appointment
+        )
+        return Success(result=appointment_result, message="预约成功")
+    except ValueError as e:
+        return Fail(message=str(e))
+    except Exception as e:
+        return Fail(message=f"预约失败: {str(e)}")
+
+
+@router_doctor.post("/appointment/check", summary="检查预约可用性")
+async def check_appointment_availability(
+    doctor_id: int,
+    appointment_date: str,
+    db_session: AsyncSession = Depends(depends_get_db_session),
+):
+    """
+    检查预约可用性
+
+    :param doctor_id: 医生ID
+    :param appointment_date: 预约日期 (格式: YYYY-MM-DD)
+    :param db_session: 数据库连接依赖注入对象
+    :return: 可用性检查结果
+    """
+    try:
+        from datetime import datetime
+
+        appointment_datetime = datetime.strptime(appointment_date, "%Y-%m-%d")
+
+        availability = await ScheduleService.check_schedule_availability(
+            db_session, doctor_id, appointment_datetime
+        )
+        return Success(result=availability)
+    except ValueError as e:
+        return Fail(message=f"日期格式错误: {str(e)}")
+    except Exception as e:
+        return Fail(message=f"检查可用性失败: {str(e)}")
+
+
+@router_doctor.get("/appointment/{appointment_id}", summary="获取预约详情")
+async def get_appointment_detail(
+    appointment_id: int = Path(..., description="预约ID"),
+    db_session: AsyncSession = Depends(depends_get_db_session),
+):
+    """
+    获取预约详情
+
+    :param appointment_id: 预约ID
+    :param db_session: 数据库连接依赖注入对象
+    :return: 预约详情
+    """
+    try:
+        appointment = await AppointmentService.get_appointment_detail(
+            db_session, appointment_id
+        )
+        if not appointment:
+            return Fail(message="预约信息不存在", code=404)
+
+        return Success(result=appointment)
+    except Exception as e:
+        return Fail(message=f"获取预约详情失败: {str(e)}")
+
+
+@router_doctor.delete("/appointment/{appointment_id}", summary="取消预约")
+async def cancel_appointment(
+    appointment_id: int = Path(..., description="预约ID"),
+    db_session: AsyncSession = Depends(depends_get_db_session),
+):
+    """
+    取消预约
+
+    :param appointment_id: 预约ID
+    :param db_session: 数据库连接依赖注入对象
+    :return: 取消结果
+    """
+    try:
+        success = await AppointmentService.cancel_appointment(
+            db_session, appointment_id
+        )
+        return Success(result={"cancelled": success}, message="预约取消成功")
+    except ValueError as e:
+        return Fail(message=str(e), code=404 if "不存在" in str(e) else 400)
+    except Exception as e:
+        return Fail(message=f"取消预约失败: {str(e)}")
+
+
+@router_doctor.get(
+    "/appointments/patient/{patient_phone}", summary="根据患者电话获取预约列表"
+)
+async def get_patient_appointments(
+    patient_phone: str = Path(..., description="患者电话"),
+    db_session: AsyncSession = Depends(depends_get_db_session),
+):
+    """
+    根据患者电话获取预约列表
+
+    :param patient_phone: 患者电话
+    :param db_session: 数据库连接依赖注入对象
+    :return: 患者预约列表
+    """
+    try:
+        result = await AppointmentService.get_patient_appointments(
+            db_session, patient_phone
+        )
+        return Success(result=result)
+    except ValueError as e:
+        return Fail(message=str(e))
+    except Exception as e:
+        return Fail(message=f"获取患者预约列表失败: {str(e)}")
