@@ -1,6 +1,7 @@
 from fastapi import Depends, HTTPException, Query, Path
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
+from datetime import datetime
 
 from ..services import DoctorService, ScheduleService, AppointmentService
 from db.database import depends_get_db_session
@@ -232,8 +233,6 @@ async def check_appointment_availability(
     :return: 可用性检查结果
     """
     try:
-        from datetime import datetime
-
         appointment_datetime = datetime.strptime(appointment_date, "%Y-%m-%d")
 
         availability = await ScheduleService.check_schedule_availability(

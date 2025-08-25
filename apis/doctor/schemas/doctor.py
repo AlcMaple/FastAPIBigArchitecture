@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List
 
 
@@ -12,8 +12,7 @@ class DoctorInfo(BaseModel):
     specialty: str = Field(..., description="专长")
     available: bool = Field(True, description="是否可预约")
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DoctorListResponse(BaseModel):

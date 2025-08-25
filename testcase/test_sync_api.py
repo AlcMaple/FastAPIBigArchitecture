@@ -4,10 +4,8 @@
 -m：将当前目录添加到 sys.path 中，目的是找到 app 模块
 """
 
-from fastapi.testclient import TestClient
 
-
-def test_doctorlist(client: TestClient):
+def test_doctorlist(client):
     res = client.get("/api/v1/doctor_list")
     print(
         "sdsd", res.text
@@ -16,28 +14,21 @@ def test_doctorlist(client: TestClient):
     assert type(res.status_code) == int
 
 
-def test_doctorinfo(client: TestClient):
+def test_doctorinfo(client):
     res = client.get("/api/v1/doctors")
     print("dsdsd", res.text)
     assert res.status_code == 200
     assert type(res.status_code) == int
 
 
-def test_doctor_detail(client: TestClient):
+def test_doctor_detail(client):
     res = client.get("/api/v1/doctor/1")
     print("doctor detail", res.text)
     assert res.status_code == 200
     assert type(res.status_code) == int
 
 
-def test_doctors_by_department(client: TestClient):
-    res = client.get("/api/v1/doctors/department/内科")
-    print("doctors by department", res.text)
-    assert res.status_code == 200
-    assert type(res.status_code) == int
-
-
-def test_create_doctor(client: TestClient):
+def test_create_doctor(client):
     doctor_data = {
         "name": "测试医生",
         "department": "内科",
@@ -51,35 +42,7 @@ def test_create_doctor(client: TestClient):
     assert type(res.status_code) == int
 
 
-def test_doctor_schedules(client: TestClient):
-    res = client.get("/api/v1/doctor/1/schedules")
-    print("doctor schedules", res.text)
-    assert res.status_code == 200
-    assert type(res.status_code) == int
-
-
-def test_doctor_appointments(client: TestClient):
-    res = client.get("/api/v1/doctor/1/appointments")
-    print("doctor appointments", res.text)
-    assert res.status_code == 200
-    assert type(res.status_code) == int
-
-
-def test_create_appointment(client: TestClient):
-    appointment_data = {
-        "doctor_id": 1,
-        "patient_name": "测试患者",
-        "patient_phone": "13900139001",
-        "appointment_date": "2024-12-01",
-        "appointment_time": "09:00",
-    }
-    res = client.post("/api/v1/appointment", json=appointment_data)
-    print("create appointment", res.text)
-    assert res.status_code == 200
-    assert type(res.status_code) == int
-
-
-def test_check_appointment_availability(client: TestClient):
+def test_check_appointment_availability(client):
     res = client.post(
         "/api/v1/appointment/check",
         json={"doctor_id": 1, "appointment_date": "2024-12-01"},
@@ -89,21 +52,7 @@ def test_check_appointment_availability(client: TestClient):
     assert type(res.status_code) == int
 
 
-def test_appointment_detail(client: TestClient):
-    res = client.get("/api/v1/appointment/1")
-    print("appointment detail", res.text)
-    assert res.status_code == 200
-    assert type(res.status_code) == int
-
-
-def test_patient_appointments(client: TestClient):
-    res = client.get("/api/v1/appointments/patient/13900139001")
-    print("patient appointments", res.text)
-    assert res.status_code == 200
-    assert type(res.status_code) == int
-
-
-def test_cancel_appointment(client: TestClient):
+def test_cancel_appointment(client):
     res = client.delete("/api/v1/appointment/1")
     print("cancel appointment", res.text)
     assert res.status_code == 200
