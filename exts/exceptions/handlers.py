@@ -45,6 +45,24 @@ class BusinessError(Exception):
         super().__init__(self)
 
 
+"""
+该框架的插件设计参考了：插件模板（FastAPI 支持自定义插件开发）
+import fastapi
+import pydantic
+import typing
+import abc
+
+class PluginBase(abc.ABC):
+    def __init__(self, app: fastapi.FastAPI=None,config:pydantic.BaseSettings=None):
+        if app is not None:
+            self.init_app(app)
+    
+    @abc.abstractmethod
+    def init_app(self, app: fastapi.FastAPI,config:pydantic.BaseSettings=None,*args, **kwargs)->None:
+        raise NotImplementedError('需要实现初始化')
+"""
+
+
 class ApiExceptionHandler:
     """统一管理所有异常捕获"""
 
