@@ -19,7 +19,8 @@ def setup_ext_loguru(log_pro_path: str = None):
     err_log_file_path = os.path.join(log_dir, "error_{time:YYYYMMDD}.log")
 
     LOGURU_FORMAT: str = (
-        "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <16}</level> | <bold>{message}</bold>"
+        "<cyan>{time:YYYY-MM-DD HH:mm:ss.SSS}</cyan> │ "
+        "<level>{level: <8}</level> │ {message}"
     )
     # 指定 loguru 日志处理方式和输出格式
     # handlers：指定日志处理器，列表类型
