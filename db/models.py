@@ -32,7 +32,13 @@ class Doctor(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=datetime.now, description="更新时间")
 
     # 关系
-    schedules: List["Schedule"] = Relationship(back_populates="doctor")
+    """
+    一个医生，可以有多个排班。schedules 属性是一个 List 列表，列表里每个值都是一个 Schedule 对象
+    一个医生，可以有多个预约
+    """
+    schedules: List["Schedule"] = Relationship(  # Relationship用于声明两个模型的关联
+        back_populates="doctor"
+    )  # back_populates="doctor"：将 schedules 属性和 Schedule 的 doctor 属性关联起来
     appointments: List["Appointment"] = Relationship(back_populates="doctor")
 
 
