@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from apis import router_doctor
 
 # 导入中间件
-from middlewares.loger.middleware import LogerMiddleware
+from middlewares.logger.middleware import LogerMiddleware
 
 # 导入配置
 from config.settings import settings

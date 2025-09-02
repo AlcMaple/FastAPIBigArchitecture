@@ -10,11 +10,11 @@ def setup_ext_loguru(log_pro_path: str = None):
         log_pro_path = os.path.split(os.path.realpath(__file__))[0]
 
     # 检查日志目录是否存在
-    log_dir = os.path.join(log_pro_path, "log")
+    log_dir = os.path.join(log_pro_path, "log/prod")
     if not os.path.exists(log_dir):
         os.makedirs(log_dir, exist_ok=True)
 
-    # 定义 info_log文件名称
+    # 定义 info_log 文件名称
     log_file_path = os.path.join(log_dir, "info_{time:YYYYMMDD}.log")
     err_log_file_path = os.path.join(log_dir, "error_{time:YYYYMMDD}.log")
 
