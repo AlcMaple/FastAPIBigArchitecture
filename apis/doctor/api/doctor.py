@@ -3,11 +3,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 from datetime import datetime
 
-from ..services import DoctorService, ScheduleService, AppointmentService
+from ..services.appointment import AppointmentService
+from ..services.doctor import DoctorService
+from ..services.schedule import ScheduleService
 from db.database import depends_get_db_session
-from exts.responses import Success, Fail
+from exts.responses.json_response import Success, Fail
 from . import router_doctor
-from ..schemas import AppointmentRequest, DoctorCreateRequest, DoctorUpdateRequest
+from ..schemas.appointment import AppointmentRequest
+from ..schemas.doctor import DoctorCreateRequest, DoctorUpdateRequest
 
 
 @router_doctor.get("/doctor_list", summary="获取可以预约的医生列表信息")

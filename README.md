@@ -1,4 +1,4 @@
-# FastAPI 医疗管理系统
+# FastAPI Web 框架
 
 基于 FastAPI 的个人服务项目框架，采用分层架构设计
 
@@ -54,63 +54,46 @@ FastAPIBigArchitecture/
 │   │   │   ├── __init__.py
 │   │   │   └── doctor.py
 │   │   ├── dependencies
-│   │   │   └── __init__.py
 │   │   ├── repository
-│   │   │   ├── __init__.py
 │   │   │   ├── appointment.py
 │   │   │   ├── doctor.py
 │   │   │   └── schedule.py
 │   │   ├── schemas
-│   │   │   ├── __init__.py
 │   │   │   ├── appointment.py
 │   │   │   ├── doctor.py
 │   │   │   └── schedule.py
-│   │   ├── services
-│   │   │   ├── __init__.py
-│   │   │   ├── appointment.py
-│   │   │   ├── doctor.py
-│   │   │   └── schedule.py
-│   │   └── __init__.py
+│   │   └── services
+│   │       ├── appointment.py
+│   │       ├── doctor.py
+│   │       └── schedule.py
 │   ├── hospital
 │   └── __init__.py
 ├── config
-│   ├── __init__.py
 │   └── settings.py
 ├── db
-│   ├── __init__.py
 │   ├── database.py
 │   ├── init_db.py
 │   └── models.py
 ├── exts
 │   ├── exceptions
-│   │   ├── __init__.py
 │   │   └── handlers.py
 │   ├── logururoute
-│   │   ├── __init__.py
 │   │   └── logger.py
 │   ├── requestvar
-│   │   ├── __init__.py
 │   │   └── bing.py
-│   ├── responses
-│   │   ├── __init__.py
-│   │   └── json_response.py
-│   └── __init__.py
-├── log
-│   └── __init__.py
+│   └── responses
+│       └── json_response.py
 ├── middlewares
-│   ├── loger
-│   │   ├── __init__.py
-│   │   └── middleware.py
-│   └── __init__.py
+│   └── loger
+│       └── middleware.py
 ├── plugins
-│   └── __init__.py
 ├── static
 ├── testcase
 │   ├── conftest.py
 │   └── test_sync_api.py
 ├── utils
-│   ├── __init__.py
 │   └── datetime_helper.py
+├── wiki
 ├── .env.example
 ├── .gitignore
 ├── app.py

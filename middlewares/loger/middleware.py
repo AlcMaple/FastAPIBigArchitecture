@@ -8,8 +8,8 @@ from datetime import datetime
 import typing
 from time import perf_counter
 
-from exts.requestvar import bind_contextvar
-from exts.logururoute import setup_ext_loguru, async_trace_add_log_record
+from exts.requestvar.bing import bind_contextvar
+from exts.logururoute.logger import setup_ext_loguru, async_trace_add_log_record
 
 request_var: ContextVar[Request] = ContextVar("request")
 request: Request = bind_contextvar(request_var)
@@ -249,9 +249,11 @@ class LogerMiddleware:
                 response_log = {
                     "traceid": request.state.traceid,
                     "response_time": f"{response_time:.4f}s",
-                    "ts": f"{datetime.now():%Y-%m-%d %H:%M:%S%z}"
+                    "ts": f"{datetime.now():%Y-%m-%d %H:%M:%S%z}",
                 }
-                await async_trace_add_log_record(event_type="response", msg=response_log)
+                await async_trace_add_log_record(
+                    event_type="response", msg=response_log
+                )
                 self.reset_token_request(token_request)
         else:
             await self.app(scope, receive, send)

@@ -9,9 +9,10 @@ from apis import router_doctor
 from middlewares.loger.middleware import LogerMiddleware
 
 # 导入配置
-from config import settings
+from config.settings import settings
 
-from db import init_database
+from db.init_db import init_database
+from db.database import async_engine
 
 
 @asynccontextmanager
@@ -30,6 +31,9 @@ async def lifespan(app: FastAPI):
 
     # 关闭时的清理代码
     print("应用关闭中...")
+    # 关闭数据库连接池
+    await async_engine.dispose()
+    print("数据库连接池已关闭")
 
 
 # 创建FastAPI应用实例
@@ -56,7 +60,13 @@ app.add_middleware(
     is_record_useragent=True,  # 记录用户代理信息
     is_record_headers=False,  # 不记录请求头信息
     nesss_access_heads_keys=[],  # 不记录特定请求头
-    ignore_url=["/favicon.ico", "/health", "/docs", "/redoc", "/openapi.json"]  # 忽略的URL
+    ignore_url=[
+        "/favicon.ico",
+        "/health",
+        "/docs",
+        "/redoc",
+        "/openapi.json",
+    ],  # 忽略的URL
 )
 
 # 注册路由分组

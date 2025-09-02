@@ -2,8 +2,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 
-from ..repository import DoctorRepository, ScheduleRepository
-from ..schemas import ScheduleCreateRequest, ScheduleUpdateRequest
+from ..repository.doctor import DoctorRepository
+from ..repository.schedule import ScheduleRepository
+from ..schemas.schedule import ScheduleCreateRequest, ScheduleUpdateRequest
 
 
 class ScheduleService:
