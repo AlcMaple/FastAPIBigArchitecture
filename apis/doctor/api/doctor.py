@@ -58,7 +58,7 @@ async def get_doctor_detail(
     try:
         doctor_info = await DoctorService.get_doctor_detail(db_session, doctor_id)
         if not doctor_info:
-            return Fail(message="医生信息不存在", code=404)
+            return Fail(message="医生信息不存在", api_code=404)
 
         return Success(result=doctor_info)
     except Exception as e:
@@ -125,7 +125,7 @@ async def update_doctor(
         )
         return Success(result=result, message="医生信息更新成功")
     except ValueError as e:
-        return Fail(message=str(e), code=404 if "不存在" in str(e) else 400)
+        return Fail(message=str(e), api_code=404 if "不存在" in str(e) else 400)
     except Exception as e:
         return Fail(message=f"更新医生信息失败: {str(e)}")
 
@@ -146,7 +146,7 @@ async def delete_doctor(
         success = await DoctorService.delete_doctor(db_session, doctor_id)
         return Success(result={"deleted": success}, message="医生删除成功")
     except ValueError as e:
-        return Fail(message=str(e), code=404 if "不存在" in str(e) else 400)
+        return Fail(message=str(e), api_code=404 if "不存在" in str(e) else 400)
     except Exception as e:
         return Fail(message=f"删除医生失败: {str(e)}")
 
@@ -170,7 +170,7 @@ async def get_doctor_schedules(
             db_session, doctor_id, days
         )
         if not schedules:
-            return Fail(message="医生信息不存在或暂无排班", code=404)
+            return Fail(message="医生信息不存在或暂无排班", api_code=404)
 
         return Success(result={"schedules": schedules, "total": len(schedules)})
     except Exception as e:
@@ -193,7 +193,7 @@ async def get_doctor_appointments(
         result = await AppointmentService.get_doctor_appointments(db_session, doctor_id)
         return Success(result=result)
     except ValueError as e:
-        return Fail(message=str(e), code=404)
+        return Fail(message=str(e), api_code=404)
     except Exception as e:
         return Fail(message=f"获取预约列表失败: {str(e)}")
 
@@ -265,7 +265,7 @@ async def get_appointment_detail(
             db_session, appointment_id
         )
         if not appointment:
-            return Fail(message="预约信息不存在", code=404)
+            return Fail(message="预约信息不存在", api_code=404)
 
         return Success(result=appointment)
     except Exception as e:
@@ -290,7 +290,7 @@ async def cancel_appointment(
         )
         return Success(result={"cancelled": success}, message="预约取消成功")
     except ValueError as e:
-        return Fail(message=str(e), code=404 if "不存在" in str(e) else 400)
+        return Fail(message=str(e), api_code=404 if "不存在" in str(e) else 400)
     except Exception as e:
         return Fail(message=f"取消预约失败: {str(e)}")
 
