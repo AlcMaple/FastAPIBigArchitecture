@@ -44,7 +44,7 @@ async def lifespan(app: FastAPI):
 # 创建FastAPI应用实例
 app = FastAPI(
     title=settings.app_name,
-    description="基于FastAPI的医疗管理系统API",
+    description=" FastAPI 管理系统API",
     version="1.0.0",
     lifespan=lifespan,
 )
