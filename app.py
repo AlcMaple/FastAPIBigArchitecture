@@ -13,27 +13,32 @@ from config.settings import settings
 
 from db.init_db import init_database
 from db.database import async_engine
+from exts.logururoute.business_logger import logger, setup_business_logger
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """应用生命周期管理"""
     # 启动时的初始化代码
-    print("应用启动中...")
+    logger.info("启动 fastapi arch")
+
+    # 确保业务日志处理器在中间件初始化后仍然存在
+    setup_business_logger()
+    logger.info("业务日志配置完成")
 
     # 初始化数据库表
     try:
         await init_database()
     except Exception as e:
-        print(f"数据库初始化失败: {e}")
+        logger.error(f"数据库初始化失败: {e}")
 
     yield
 
     # 关闭时的清理代码
-    print("应用关闭中...")
+    logger.info("关闭 fastapi arch")
     # 关闭数据库连接池
     await async_engine.dispose()
-    print("数据库连接池已关闭")
+    logger.info("关闭数据库连接")
 
 
 # 创建FastAPI应用实例
@@ -76,7 +81,7 @@ app.include_router(router_doctor)
 @app.get("/", summary="健康检查")
 async def root():
     """根路径健康检查"""
-    return {"message": "医疗管理系统API正在运行", "status": "healthy"}
+    return {"message": "fastapi 框架API正在运行", "status": "healthy"}
 
 
 @app.get("/health", summary="健康检查")

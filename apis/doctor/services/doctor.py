@@ -3,6 +3,7 @@ from typing import Dict, List, Optional, Any
 
 from ..repository.doctor import DoctorRepository
 from ..schemas.doctor import DoctorCreateRequest, DoctorUpdateRequest
+from exts.logururoute.business_logger import logger
 
 
 class DoctorService:
@@ -16,8 +17,15 @@ class DoctorService:
         :param db_session: 数据库会话对象
         :return: 医生列表信息
         """
+        logger.info("开始获取可预约医生列表")
+        logger.warning("测试警告")
+        logger.error("测试错误")
+        logger.debug("测试调试")
+        logger.critical("测试严重")
+
         available_doctors = await DoctorRepository.get_available_doctors(db_session)
 
+        logger.info(f"获取可预约医生列表成功，共{len(available_doctors)}位医生")
         return {"doctors": available_doctors, "total": len(available_doctors)}
 
     @staticmethod

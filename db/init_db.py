@@ -12,6 +12,7 @@ from .models import (
     MedicalRecord,
     AppointmentStatus,
 )
+from exts.logururoute.business_logger import logger
 
 
 async def create_tables():
@@ -28,9 +29,8 @@ async def drop_tables():
 
 async def init_database():
     """初始化数据库"""
-    print("正在创建数据库表...")
     await create_tables()
-    print("数据库表创建完成!")
+    logger.info("数据表配置完成")
 
 
 if __name__ == "__main__":
