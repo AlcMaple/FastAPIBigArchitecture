@@ -22,7 +22,7 @@ async def lifespan(app: FastAPI):
     # 启动时的初始化代码
     logger.info("启动 fastapi arch")
 
-    # 确保业务日志处理器在中间件初始化后仍然存在
+    # 检查业务日志配置
     setup_business_logger()
     logger.info("业务日志配置完成")
 

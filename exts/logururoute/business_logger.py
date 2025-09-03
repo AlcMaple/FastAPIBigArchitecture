@@ -48,5 +48,5 @@ def setup_business_logger(log_dev_path: str = None):
     return _base_logger
 
 
-# 初始化业务日志配置并导出
+# 初始化业务日志
 logger = setup_business_logger()

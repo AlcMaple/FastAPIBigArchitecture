@@ -31,7 +31,7 @@ class Doctor(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.now, description="创建时间")
     updated_at: datetime = Field(default_factory=datetime.now, description="更新时间")
 
-    # 关系
+    # 关系（关系属性并不属于数据表的字段）
     """
     一个医生，可以有多个排班。schedules 属性是一个 List 列表，列表里每个值都是一个 Schedule 对象
     一个医生，可以有多个预约
