@@ -42,7 +42,6 @@ python main.py
 应用启动后访问：
 
 * API 文档：[http://localhost:8000/docs](http://localhost:8000/docs)
-* 健康检查：[http://localhost:8000/health](http://localhost:8000/health)
 
 ## 项目结构
 
@@ -78,13 +77,15 @@ FastAPIBigArchitecture/
 │   ├── exceptions
 │   │   └── handlers.py
 │   ├── logururoute
+│   │   ├── business_logger.py
+│   │   ├── config.py
 │   │   └── logger.py
 │   ├── requestvar
 │   │   └── bing.py
 │   └── responses
 │       └── json_response.py
 ├── middlewares
-│   └── loger
+│   └── logger
 │       └── middleware.py
 ├── plugins
 ├── static
@@ -94,6 +95,7 @@ FastAPIBigArchitecture/
 ├── utils
 │   └── datetime_helper.py
 ├── wiki
+│   └── logger.md
 ├── .env.example
 ├── .gitignore
 ├── app.py
@@ -211,7 +213,6 @@ plugs/ 目录用于存放插件扩展，如**自定义**插件、第三方插件
 * 依赖注入模式
 * 统一错误处理
 * RESTful API 设计
-```
 
 ## 开发命令
 
