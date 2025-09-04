@@ -44,6 +44,10 @@ http://127.0.0.1:8000/api/v1/doctor/1
 
 但是没有业务逻辑的日志，全程用 print 是不好的，所以这个框架仍然添加业务逻辑的日志
 
+logururoute/business_logger.py：业务逻辑日志
+logururoute/logger.py：请求 API 以及响应 API 的日志
+logururoute/config.py：日志配置，统一关联业务逻辑和 HTTP 请求响应日志
+
 - log/prod：存放的是生产环境的日志，即请求 API 以及响应 API 的日志
 - log/dev：存放的是开发环境的日志，即业务逻辑的日志
 

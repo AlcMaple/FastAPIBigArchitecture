@@ -13,18 +13,17 @@ from config.settings import settings
 
 from db.init_db import init_database
 from db.database import async_engine
-from exts.logururoute.business_logger import logger, setup_business_logger
+from exts.logururoute.config import logger, setup_all_loggers
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """应用生命周期管理"""
+    # 初始化日志
+    setup_all_loggers("./")
+
     # 启动时的初始化代码
     logger.info("启动 fastapi arch")
-
-    # 检查业务日志配置
-    setup_business_logger()
-    logger.info("业务日志配置完成")
 
     # 初始化数据库表
     try:
@@ -76,15 +75,3 @@ app.add_middleware(
 
 # 注册路由分组
 app.include_router(router_doctor)
-
-
-@app.get("/", summary="健康检查")
-async def root():
-    """根路径健康检查"""
-    return {"message": "fastapi 框架API正在运行", "status": "healthy"}
-
-
-@app.get("/health", summary="健康检查")
-async def health_check():
-    """健康检查端点"""
-    return {"status": "healthy", "message": "服务运行正常"}

@@ -9,7 +9,7 @@ import typing
 from time import perf_counter
 
 from exts.requestvar.bing import bind_contextvar
-from exts.logururoute.logger import setup_ext_loguru, async_trace_add_log_record
+from exts.logururoute.config import async_trace_add_log_record
 
 request_var: ContextVar[Request] = ContextVar("request")
 request: Request = bind_contextvar(request_var)
@@ -20,7 +20,6 @@ class LogerMiddleware:
         self,
         *,
         app: ASGIApp,
-        log_pro_path: str,  # 当前日志文件的存储路径
         is_record_useragent=False,  # 是否记录用户 UA 信息
         is_record_headers=False,
         nesss_access_heads_keys=[],  # 日志记录哪一部分关键请求信息
@@ -31,7 +30,6 @@ class LogerMiddleware:
         self.is_record_headers = is_record_headers
         self.nesss_access_heads_keys = nesss_access_heads_keys
         self.ignore_url = ignore_url
-        setup_ext_loguru(log_pro_path)
 
     def make_traceid(self, request) -> None:
         """
