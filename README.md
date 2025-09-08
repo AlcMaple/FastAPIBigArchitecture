@@ -29,8 +29,20 @@ cp .env.example .env
 
 3. 修改 `.env` 文件中的数据库连接信息：
 
-```env
+```bash
 DATABASE_URL=mysql+aiomysql://用户名:密码@localhost:3306/arch_db
+```
+
+4. 如果需要测试的话，还需要创建测试数据库：
+
+```sql
+CREATE DATABASE arch_test_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+5. 修改 `.env` 文件中的测试数据库连接信息：
+
+```bash
+TEST_DATABASE_URL=mysql+aiomysql://用户名:密码@localhost:3306/arch_test_db
 ```
 
 ### 启动应用
