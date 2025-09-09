@@ -1,5 +1,6 @@
 from loguru import logger as _base_logger
 import os
+from sys import stdout
 
 
 def setup_business_logger(log_dev_path: str = None):
@@ -45,8 +46,6 @@ def setup_business_logger(log_dev_path: str = None):
 
     if not business_handler_exists:
         # 配置控制台输出
-        from sys import stdout
-
         _base_logger.configure(handlers=[{"sink": stdout, "format": console_format}])
 
         # 添加业务日志文件，包含所有级别 (DEBUG, INFO, WARNING, ERROR, CRITICAL)
