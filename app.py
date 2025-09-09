@@ -13,14 +13,15 @@ from config.settings import settings
 
 from db.init_db import init_database
 from db.database import async_engine
-from exts.logururoute.config import logger, setup_all_loggers
+from exts.logururoute.config import setup_loggers
+from exts.logururoute.business_logger import logger
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """应用生命周期管理"""
-    # 初始化日志
-    setup_all_loggers("./")
+    # 初始化中间件日志
+    setup_loggers("./")
 
     # 启动时的初始化代码
     logger.info("启动 fastapi arch")

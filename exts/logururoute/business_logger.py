@@ -7,6 +7,10 @@ def setup_business_logger(log_dev_path: str = None):
     设置业务逻辑日志配置
     用于开发环境的业务逻辑调试日志
     """
+    # 测试环境，不配置日志
+    if os.environ.get("TESTING") == "true":
+        return _base_logger
+
     if not log_dev_path:
         # 获取项目根目录路径
         current_file_dir = os.path.split(os.path.realpath(__file__))[
@@ -23,8 +27,13 @@ def setup_business_logger(log_dev_path: str = None):
     # 定义业务日志文件名称
     dev_log_file_path = os.path.join(log_dir, "{time:YYYYMMDD}_arch.log")
 
-    # 配置日志文件格式
-    format_template = " {time:YYYY-MM-DD HH:mm:ss.SSS} | {level} | {name}:{function}:{line} | {message}"
+    # 配置控制台和日志文件格式
+    console_format = (
+        "<cyan>{time:YYYY-MM-DD HH:mm:ss.SSS}</cyan> │ "
+        "<level>{level: <8}</level> │ "
+        "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> │ {message}"
+    )
+    file_format = " {time:YYYY-MM-DD HH:mm:ss.SSS} | {level} | {name}:{function}:{line} | {message}"
 
     # 检查是否已经添加了业务日志文件处理器
     business_handler_exists = False
@@ -35,10 +44,15 @@ def setup_business_logger(log_dev_path: str = None):
                 break
 
     if not business_handler_exists:
+        # 配置控制台输出
+        from sys import stdout
+
+        _base_logger.configure(handlers=[{"sink": stdout, "format": console_format}])
+
         # 添加业务日志文件，包含所有级别 (DEBUG, INFO, WARNING, ERROR, CRITICAL)
         _base_logger.add(
             dev_log_file_path,
-            format=format_template,
+            format=file_format,
             rotation="00:00",
             encoding="utf-8",
             level="DEBUG",  # 记录DEBUG及以上级别的所有日志
