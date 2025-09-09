@@ -1,6 +1,8 @@
 from sqlmodel import create_engine, Session
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator
 
 from config.settings import settings
 
@@ -24,10 +26,26 @@ AsyncSessionLocal = sessionmaker(
 
 
 async def get_async_session() -> AsyncSession:
-    """获取异步数据库会话"""
+    """获取异步数据库会话(查询)"""
     async with AsyncSessionLocal() as session:
         try:
             yield session
+        finally:
+            await session.close()
+
+
+@asynccontextmanager
+async def get_async_session_with_transaction() -> AsyncGenerator[AsyncSession, None]:
+    """获取自动事务管理的异步数据库会话（增删改）"""
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+            # 自动提交事务
+            await session.commit()
+        except Exception:
+            # 自动回滚
+            await session.rollback()
+            raise
         finally:
             await session.close()
 
@@ -36,4 +54,10 @@ async def get_async_session() -> AsyncSession:
 async def depends_get_db_session() -> AsyncSession:
     """数据库会话依赖注入"""
     async for session in get_async_session():
+        yield session
+
+
+async def depends_get_db_session_with_transaction() -> AsyncSession:
+    """数据库会话依赖注入（带自动事务管理）"""
+    async with get_async_session_with_transaction() as session:
         yield session
