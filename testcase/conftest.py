@@ -3,6 +3,22 @@ from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlmodel import SQLModel
+import sys
+from pathlib import Path
+import logging
+import os
+
+# 确保运行到项目根目录
+sys.path.append(str(Path(__file__).parent.parent))
+
+# 日志配置
+from loguru import logger
+
+os.environ["TESTING"] = "true"
+logging.disable(logging.CRITICAL)
+logger.remove()
+logger.add(lambda _: None)
+
 from app import app
 from db.database import depends_get_db_session
 from config.settings import settings
@@ -11,8 +27,7 @@ from config.settings import settings
 @pytest.fixture(scope="session")
 async def test_engine():
     engine = create_async_engine(
-        settings.test_database_url,
-        echo=settings.database_echo
+        settings.test_database_url, echo=settings.database_echo
     )
     # 创建所有表
     async with engine.begin() as conn:
@@ -35,7 +50,7 @@ async def test_db_session(test_engine):
 def client(test_db_session):
     async def override_get_db():
         yield test_db_session
-    
+
     app.dependency_overrides[depends_get_db_session] = override_get_db
     with TestClient(app) as c:
         yield c
