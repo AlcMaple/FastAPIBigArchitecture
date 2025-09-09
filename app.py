@@ -60,7 +60,6 @@ app.add_middleware(
 # 添加日志中间件
 app.add_middleware(
     LogerMiddleware,
-    log_pro_path="./",  # 当前项目根目录
     is_record_useragent=True,  # 记录用户代理信息
     is_record_headers=False,  # 不记录请求头信息
     nesss_access_heads_keys=[],  # 不记录特定请求头
