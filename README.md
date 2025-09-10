@@ -4,7 +4,7 @@
 
 ## 安装
 
-[教程]()，包含了从 0 到 1 的安装过程，以及安装完成后的使用教程
+[教程](https://github.com/AlcMaple/FastAPIBigArchitecture/wiki)，包含了从 0 到 1 的安装过程，以及安装完成后的使用教程
 
 ## 快速开始
 
