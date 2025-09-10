@@ -1,12 +1,11 @@
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
-from sqlmodel import SQLModel
 import sys
 from pathlib import Path
 import logging
 import os
+import tempfile
+import shutil
 
 # 确保运行到项目根目录
 sys.path.append(str(Path(__file__).parent.parent))
@@ -20,38 +19,47 @@ logger.remove()
 logger.add(lambda _: None)
 
 from app import app
-from db.database import depends_get_db_session
+from db.json_database import JsonDatabase, json_db
 from config.settings import settings
 
 
 @pytest.fixture(scope="session")
-async def test_engine():
-    engine = create_async_engine(
-        settings.test_database_url, echo=settings.database_echo
-    )
-    # 创建所有表
-    async with engine.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.create_all)
-    yield engine
-    await engine.dispose()
+def test_data_dir():
+    """创建测试用的临时数据目录"""
+    temp_dir = tempfile.mkdtemp(prefix="test_data_")
+    yield temp_dir
+    # 清理临时目录
+    shutil.rmtree(temp_dir, ignore_errors=True)
 
 
 @pytest.fixture
-async def test_db_session(test_engine):
-    AsyncTestSession = sessionmaker(
-        bind=test_engine, class_=AsyncSession, expire_on_commit=False
-    )
-    async with AsyncTestSession() as session:
-        yield session
-        await session.rollback()
+def test_json_db(test_data_dir):
+    """创建测试用的JSON数据库实例"""
+    # 使用临时目录
+    original_data_dir = settings.data_dir
+    settings.data_dir = test_data_dir
+    
+    # 创建测试用的JSON数据库实例
+    test_db = JsonDatabase()
+    
+    yield test_db
+    
+    # 恢复原始设置
+    settings.data_dir = original_data_dir
 
 
 @pytest.fixture
-def client(test_db_session):
-    async def override_get_db():
-        yield test_db_session
-
-    app.dependency_overrides[depends_get_db_session] = override_get_db
+def client(test_json_db):
+    """创建测试客户端"""
+    # 重写全局JSON数据库实例
+    original_json_db = json_db
+    
+    # 由于我们的API不再使用依赖注入，我们需要直接替换全局实例
+    import db.json_database
+    db.json_database.json_db = test_json_db
+    
     with TestClient(app) as c:
         yield c
-    app.dependency_overrides.clear()
+    
+    # 恢复原始实例
+    db.json_database.json_db = original_json_db
