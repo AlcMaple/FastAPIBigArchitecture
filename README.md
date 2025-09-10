@@ -90,8 +90,7 @@ FastAPIBigArchitecture/
 │   │   └── handlers.py
 │   ├── logururoute
 │   │   ├── business_logger.py
-│   │   ├── config.py
-│   │   └── logger.py
+│   │   └── config.py
 │   ├── requestvar
 │   │   └── bing.py
 │   └── responses
@@ -107,7 +106,9 @@ FastAPIBigArchitecture/
 ├── utils
 │   └── datetime_helper.py
 ├── wiki
-│   └── logger.md
+│   ├── db.md
+│   ├── logger.md
+│   └── test.md
 ├── .env.example
 ├── .gitignore
 ├── app.py
