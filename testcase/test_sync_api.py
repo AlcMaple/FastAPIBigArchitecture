@@ -7,7 +7,7 @@ import pytest
 @pytest.mark.asyncio
 async def test_setup_test_data(test_json_db):
     """设置测试数据"""
-    # 创建测试医生数据
+    # 创建医生数据
     test_doctor = {
         "name": "测试医生",
         "department": "内科", 
@@ -31,7 +31,7 @@ def test_get_doctors_list(client):
 
 def test_get_doctor_detail(client):
     """测试获取医生详细信息"""
-    # 先创建一个医生
+    # 创建医生
     doctor_data = {
         "name": "测试医生详情",
         "department": "外科",
@@ -71,7 +71,7 @@ def test_create_doctor(client):
 
 def test_update_doctor(client):
     """测试更新医生信息"""
-    # 先创建一个医生
+    # 创建医生
     doctor_data = {
         "name": "待更新医生",
         "department": "内科",
@@ -98,7 +98,7 @@ def test_update_doctor(client):
 
 def test_delete_doctor(client):
     """测试删除医生"""
-    # 先创建一个医生
+    # 创建医生
     doctor_data = {
         "name": "待删除医生",
         "department": "急诊科",
