@@ -1,5 +1,5 @@
 from typing import List, Optional, Dict, Any
-from db.json_database import get_json_db
+from db.database import get_json_db
 
 
 class DoctorRepository:

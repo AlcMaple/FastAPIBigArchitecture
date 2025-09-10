@@ -19,7 +19,7 @@ logger.remove()
 logger.add(lambda _: None)
 
 from app import app
-from db.json_database import JsonDatabase, json_db
+from db.database import JsonDatabase, json_db
 from config.settings import settings
 
 
@@ -38,12 +38,12 @@ def test_json_db(test_data_dir):
     # 使用临时目录
     original_data_dir = settings.data_dir
     settings.data_dir = test_data_dir
-    
+
     # 创建测试用的JSON数据库实例
     test_db = JsonDatabase()
-    
+
     yield test_db
-    
+
     # 恢复原始设置
     settings.data_dir = original_data_dir
 
@@ -53,13 +53,12 @@ def client(test_json_db):
     """创建测试客户端"""
     # 重写全局JSON数据库实例
     original_json_db = json_db
-    
-    # 由于我们的API不再使用依赖注入，我们需要直接替换全局实例
-    import db.json_database
-    db.json_database.json_db = test_json_db
-    
+    import db.database
+
+    db.database.json_db = test_json_db
+
     with TestClient(app) as c:
         yield c
-    
+
     # 恢复原始实例
-    db.json_database.json_db = original_json_db
+    db.database.json_db = original_json_db

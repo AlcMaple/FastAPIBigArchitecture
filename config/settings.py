@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     app_name: str = "FastAPIBigArchitecture"
     debug: bool = True
 
-    # JSON存储配置
+    # JSON配置
     data_dir: str = "data"
     enable_backup: bool = True
     backup_retention_days: int = 7
