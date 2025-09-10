@@ -5,7 +5,7 @@ from datetime import datetime
 
 from ..services.appointment import AppointmentService
 from ..services.schedule import ScheduleService
-from db.database import depends_get_db_session
+from db.database import depends_get_db_session, depends_get_db_session_with_transaction
 from exts.responses.json_response import Success, Fail
 from . import router_appointment
 from ..schemas.appointment import AppointmentRequest
@@ -14,7 +14,7 @@ from ..schemas.appointment import AppointmentRequest
 @router_appointment.post("/appointment", summary="预约挂号")
 async def create_appointment(
     appointment: AppointmentRequest,
-    db_session: AsyncSession = Depends(depends_get_db_session),
+    db_session: AsyncSession = Depends(depends_get_db_session_with_transaction),
 ):
     """
     创建预约
@@ -88,7 +88,7 @@ async def get_appointment_detail(
 @router_appointment.delete("/appointment/{appointment_id}", summary="取消预约")
 async def cancel_appointment(
     appointment_id: int = Path(..., description="预约ID"),
-    db_session: AsyncSession = Depends(depends_get_db_session),
+    db_session: AsyncSession = Depends(depends_get_db_session_with_transaction),
 ):
     """
     取消预约

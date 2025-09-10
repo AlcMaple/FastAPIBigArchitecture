@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..services.appointment import AppointmentService
 from ..services.doctor import DoctorService
 from ..services.schedule import ScheduleService
-from db.database import depends_get_db_session
+from db.database import depends_get_db_session, depends_get_db_session_with_transaction
 from exts.responses.json_response import Success, Fail
 from . import router_doctor
 from ..schemas.doctor import DoctorCreateRequest, DoctorUpdateRequest
@@ -84,7 +84,7 @@ async def get_doctors_by_department(
 @router_doctor.post("/doctor", summary="创建医生")
 async def create_doctor(
     doctor_request: DoctorCreateRequest,
-    db_session: AsyncSession = Depends(depends_get_db_session),
+    db_session: AsyncSession = Depends(depends_get_db_session_with_transaction),
 ):
     """
     创建医生
@@ -106,7 +106,7 @@ async def create_doctor(
 async def update_doctor(
     doctor_id: int = Path(..., description="医生ID"),
     doctor_request: DoctorUpdateRequest = None,
-    db_session: AsyncSession = Depends(depends_get_db_session),
+    db_session: AsyncSession = Depends(depends_get_db_session_with_transaction),
 ):
     """
     更新医生信息
@@ -130,7 +130,7 @@ async def update_doctor(
 @router_doctor.delete("/doctor/{doctor_id}", summary="删除医生")
 async def delete_doctor(
     doctor_id: int = Path(..., description="医生ID"),
-    db_session: AsyncSession = Depends(depends_get_db_session),
+    db_session: AsyncSession = Depends(depends_get_db_session_with_transaction),
 ):
     """
     删除医生
