@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "name": "张医生",
+    "department": "内科",
+    "title": "主任医师",
+    "specialty": "心血管疾病",
+    "available": true,
+    "created_at": "2024-01-01T10:00:00",
+    "updated_at": "2024-01-01T10:00:00"
+  },
+  {
+    "id": 2,
+    "name": "李医生",
+    "department": "外科",
+    "title": "副主任医师",
+    "specialty": "骨科手术",
+    "available": true,
+    "created_at": "2024-01-01T10:00:00",
+    "updated_at": "2024-01-01T10:00:00"
+  },
+  {
+    "id": 3,
+    "name": "王医生",
+    "department": "儿科",
+    "title": "主治医师",
+    "specialty": "儿童常见病",
+    "available": false,
+    "created_at": "2024-01-01T10:00:00",
+    "updated_at": "2024-01-01T10:00:00"
+  },
+  {
+    "id": 4,
+    "name": "陈医生",
+    "department": "妇产科",
+    "title": "副主任医师",
+    "specialty": "妇科内分泌",
+    "available": true,
+    "created_at": "2024-01-01T10:00:00",
+    "updated_at": "2024-01-01T10:00:00"
+  }
+]

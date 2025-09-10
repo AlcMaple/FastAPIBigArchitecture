@@ -10,9 +10,6 @@ from middlewares.logger.middleware import LogerMiddleware
 
 # 导入配置
 from config.settings import settings
-
-from db.init_db import init_database
-from db.database import async_engine
 from exts.logururoute.config import setup_loggers
 from exts.logururoute.business_logger import logger
 
@@ -26,19 +23,10 @@ async def lifespan(app: FastAPI):
     # 启动时的初始化代码
     logger.info("启动 fastapi arch")
 
-    # 初始化数据库表
-    try:
-        await init_database()
-    except Exception as e:
-        logger.error(f"数据库初始化失败: {e}")
-
     yield
 
     # 关闭时的清理代码
     logger.info("关闭 fastapi arch")
-    # 关闭数据库连接池
-    await async_engine.dispose()
-    logger.info("关闭数据库连接")
 
 
 # 创建FastAPI应用实例
