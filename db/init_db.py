@@ -2,16 +2,7 @@ from sqlmodel import SQLModel
 import asyncio
 
 from .database import async_engine
-from .models import (
-    Doctor,
-    Schedule,
-    Patient,
-    Appointment,
-    Hospital,
-    Department,
-    MedicalRecord,
-    AppointmentStatus,
-)
+from .models import *
 from exts.logururoute.business_logger import logger
 
 
