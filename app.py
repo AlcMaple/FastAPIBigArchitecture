@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 # 导入路由分组
-from apis import router_doctor
+from apis import router_doctor, router_appointment
 
 # 导入中间件
 from middlewares.logger.middleware import LogerMiddleware
@@ -75,3 +75,4 @@ app.add_middleware(
 
 # 注册路由分组
 app.include_router(router_doctor)
+app.include_router(router_appointment)
