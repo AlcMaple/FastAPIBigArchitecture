@@ -25,8 +25,9 @@ AsyncSessionLocal = sessionmaker(
 )
 
 
-async def get_async_session() -> AsyncSession:
-    """获取异步数据库会话(查询)"""
+@asynccontextmanager
+async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
+    """获取异步数据库会话"""
     async with AsyncSessionLocal() as session:
         try:
             yield session
@@ -36,7 +37,7 @@ async def get_async_session() -> AsyncSession:
 
 @asynccontextmanager
 async def get_async_session_with_transaction() -> AsyncGenerator[AsyncSession, None]:
-    """获取自动事务管理的异步数据库会话（增删改）"""
+    """获取自动事务管理的异步数据库会话"""
     async with AsyncSessionLocal() as session:
         try:
             yield session
@@ -51,13 +52,13 @@ async def get_async_session_with_transaction() -> AsyncGenerator[AsyncSession, N
 
 
 # 依赖注入函数
-async def depends_get_db_session() -> AsyncSession:
+async def depends_get_db_session():
     """数据库会话依赖注入"""
-    async for session in get_async_session():
+    async with get_async_session() as session:
         yield session
 
 
-async def depends_get_db_session_with_transaction() -> AsyncSession:
+async def depends_get_db_session_with_transaction():
     """数据库会话依赖注入（带自动事务管理）"""
     async with get_async_session_with_transaction() as session:
         yield session

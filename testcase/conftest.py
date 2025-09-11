@@ -4,8 +4,10 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 import logging
 import os
+import asyncio
 
 # 确保运行到项目根目录
 sys.path.append(str(Path(__file__).parent.parent))
@@ -39,46 +41,56 @@ def setup_and_teardown_test_tables():
     drop_tables_sync()
 
 
-@pytest.fixture(scope="session")
-async def test_engine():
-    """创建测试数据库引擎"""
-    engine = create_async_engine(
-        settings.test_database_url, echo=settings.database_echo
-    )
-    yield engine
-    await engine.dispose()
+# 测试引擎
+test_engine = create_async_engine(
+    settings.test_database_url,
+    echo=False,
+    pool_pre_ping=True,
+    pool_recycle=300,
+    pool_size=1,
+    max_overflow=0,
+)
+
+test_session_factory = sessionmaker(
+    bind=test_engine, class_=AsyncSession, expire_on_commit=False
+)
 
 
 @pytest.fixture
-async def test_db_session(test_engine):
-    AsyncTestSession = sessionmaker(
-        bind=test_engine, class_=AsyncSession, expire_on_commit=False
-    )
-    async with AsyncTestSession() as session:
-        try:
-            yield session
-            await session.commit()
-        except Exception:
-            await session.rollback()
-            raise
+async def test_db_session():
+    """测试数据库会话"""
+    async with test_session_factory() as session:
+        yield session
 
 
-@pytest.fixture
-def client(test_db_session):
-    """创建测试客户端并覆盖数据库依赖"""
+@pytest.fixture(scope="function")
+def client():
+    """创建测试客户端，覆盖数据库依赖"""
 
     async def override_get_db_session():
-        """覆盖普通数据库会话依赖"""
-        return test_db_session
+        """覆盖数据库会话依赖（查询）"""
+        async with test_session_factory() as session:
+            yield session
 
     async def override_get_db_session_with_transaction():
-        """覆盖带事务管理的数据库会话依赖"""
-        return test_db_session
+        """覆盖带事务管理的数据库会话依赖（增删改）"""
+        async with test_session_factory() as session:
+            try:
+                yield session
+                await session.commit()
+            except Exception:
+                await session.rollback()
+                raise
 
+    # 依赖覆盖
     app.dependency_overrides[depends_get_db_session] = override_get_db_session
     app.dependency_overrides[depends_get_db_session_with_transaction] = (
         override_get_db_session_with_transaction
     )
-    with TestClient(app) as c:
-        yield c
-    app.dependency_overrides.clear()
+
+    try:
+        with TestClient(app) as c:
+            yield c
+    finally:
+        # 清理依赖覆盖
+        app.dependency_overrides.clear()
