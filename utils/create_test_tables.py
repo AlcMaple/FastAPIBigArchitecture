@@ -13,7 +13,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 from sqlmodel import SQLModel
 from config.settings import settings
 from db.models import *
-from testcase.manager import test_db_manager
+from testcase.manager import manager
 
 
 async def create_test_tables():
@@ -21,7 +21,7 @@ async def create_test_tables():
 
     try:
         # 获取测试数据库引擎
-        engine = test_db_manager.get_engine()
+        engine = manager.get_engine()
 
         async with engine.begin() as conn:
             await conn.run_sync(SQLModel.metadata.create_all)
@@ -30,7 +30,7 @@ async def create_test_tables():
     except Exception as e:
         return False
     finally:
-        await test_db_manager.dispose_engine()
+        await manager.dispose_engine()
 
 
 def create_tables_sync():

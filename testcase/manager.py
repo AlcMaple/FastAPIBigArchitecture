@@ -68,4 +68,4 @@ class TestDatabaseManager:
 
 
 # 测试数据库管理器实例
-test_db_manager = TestDatabaseManager()
+manager = TestDatabaseManager()

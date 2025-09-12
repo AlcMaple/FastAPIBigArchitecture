@@ -17,11 +17,7 @@ class Settings(BaseSettings):
     test_database_url: str = (
         "mysql+aiomysql://root:password@localhost:3306/arch_db_test"
     )
-
-    # 测试数据库类型配置
     test_db_type: str = "sqlite"  # mysql | sqlite
-
-    # SQLite 测试数据库配置
     sqlite_test_database_url: str = "sqlite+aiosqlite:///:memory:"
 
     # mysql 连接池配置

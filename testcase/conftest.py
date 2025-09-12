@@ -21,7 +21,7 @@ from db.database import depends_get_db_session, depends_get_db_session_with_tran
 from config.settings import settings
 from utils.create_test_tables import create_tables_sync
 from utils.drop_test_tables import drop_tables_sync
-from testcase.manager import test_db_manager
+from testcase.manager import manager
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -42,8 +42,8 @@ def setup_and_teardown_test_tables():
 # 获取测试数据库管理器的引擎和会话
 def get_test_engine_and_session():
     """获取测试数据库引擎和会话"""
-    engine = test_db_manager.get_engine()
-    session = test_db_manager.get_session()
+    engine = manager.get_engine()
+    session = manager.get_session()
     return engine, session
 
 
