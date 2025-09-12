@@ -2,12 +2,8 @@ import pytest
 import sys
 from pathlib import Path
 from fastapi.testclient import TestClient
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
 import logging
 import os
-import asyncio
 
 # 确保运行到项目根目录
 sys.path.append(str(Path(__file__).parent.parent))
@@ -25,6 +21,7 @@ from db.database import depends_get_db_session, depends_get_db_session_with_tran
 from config.settings import settings
 from utils.create_test_tables import create_tables_sync
 from utils.drop_test_tables import drop_tables_sync
+from testcase.manager import test_db_manager
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -33,33 +30,30 @@ def setup_and_teardown_test_tables():
 
     # 前置：创建测试数据库表
     if not create_tables_sync():
-        raise Exception("Failed to create test tables")
+        raise Exception(f"Failed to create {settings.test_db_type} test tables")
 
     yield  # 测试运行期间
 
     # 后置：删除测试数据库表
-    drop_tables_sync()
+    if settings.test_db_type == "mysql":
+        drop_tables_sync()
 
 
-# 测试引擎
-test_engine = create_async_engine(
-    settings.test_database_url,
-    echo=False,
-    pool_pre_ping=True,
-    pool_recycle=300,
-    pool_size=1,
-    max_overflow=0,
-)
+# 获取测试数据库管理器的引擎和会话
+def get_test_engine_and_session():
+    """获取测试数据库引擎和会话"""
+    engine = test_db_manager.get_engine()
+    session = test_db_manager.get_session()
+    return engine, session
 
-test_session_factory = sessionmaker(
-    bind=test_engine, class_=AsyncSession, expire_on_commit=False
-)
+
+test_engine, test_session = get_test_engine_and_session()
 
 
 @pytest.fixture
 async def test_db_session():
     """测试数据库会话"""
-    async with test_session_factory() as session:
+    async with test_session() as session:
         yield session
 
 
@@ -69,12 +63,12 @@ def client():
 
     async def override_get_db_session():
         """覆盖数据库会话依赖（查询）"""
-        async with test_session_factory() as session:
+        async with test_session() as session:
             yield session
 
     async def override_get_db_session_with_transaction():
         """覆盖带事务管理的数据库会话依赖（增删改）"""
-        async with test_session_factory() as session:
+        async with test_session() as session:
             try:
                 yield session
                 await session.commit()
