@@ -254,7 +254,8 @@ python main.py
 * **API 文档**: Swagger UI / ReDoc
 * **类型检查**: Python Type Hints
 
-## 参考资料
+## 感谢
 
 * **书籍**: 钟远晓. *FASTAPI WEB开发入门、进阶与实战*. 机械工业出版社, 2023. 本项目的框架基于该书的预约挂号系统实战部分进行了改写与完善
 * [Use singular nouns for database table names](https://www.teamten.com/lawrence/programming/use-singular-nouns-for-database-table-names.html)，数据库表名规范参考
+* [AzurLaneAutoScript](https://github.com/LmeSzinc/AzurLaneAutoScript)，参考其开发规范以及文档编写风格
