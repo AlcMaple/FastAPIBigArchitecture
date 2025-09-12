@@ -16,7 +16,7 @@ class AppointmentStatus(str, Enum):
 class Doctor(SQLModel, table=True):
     """医生表"""
 
-    __tablename__ = "doctors"
+    __tablename__ = "doctor"
 
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(max_length=50, description="医生姓名")
@@ -45,10 +45,10 @@ class Doctor(SQLModel, table=True):
 class Schedule(SQLModel, table=True):
     """排班表"""
 
-    __tablename__ = "schedules"
+    __tablename__ = "schedule"
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    doctor_id: int = Field(foreign_key="doctors.id", description="医生ID")
+    doctor_id: int = Field(foreign_key="doctor.id", description="医生ID")
     date: datetime = Field(description="排班日期")
     start_time: str = Field(max_length=10, description="开始时间")
     end_time: str = Field(max_length=10, description="结束时间")
@@ -66,7 +66,7 @@ class Schedule(SQLModel, table=True):
 class Patient(SQLModel, table=True):
     """患者表"""
 
-    __tablename__ = "patients"
+    __tablename__ = "patient"
 
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(max_length=50, description="患者姓名")
@@ -93,12 +93,12 @@ class Patient(SQLModel, table=True):
 class Appointment(SQLModel, table=True):
     """预约表"""
 
-    __tablename__ = "appointments"
+    __tablename__ = "appointment"
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    doctor_id: int = Field(foreign_key="doctors.id", description="医生ID")
-    patient_id: int = Field(foreign_key="patients.id", description="患者ID")
-    schedule_id: int = Field(foreign_key="schedules.id", description="排班ID")
+    doctor_id: int = Field(foreign_key="doctor.id", description="医生ID")
+    patient_id: int = Field(foreign_key="patient.id", description="患者ID")
+    schedule_id: int = Field(foreign_key="schedule.id", description="排班ID")
     appointment_date: datetime = Field(description="预约日期时间")
     symptoms: Optional[str] = Field(default=None, description="症状描述")
     status: AppointmentStatus = Field(
@@ -120,7 +120,7 @@ class Appointment(SQLModel, table=True):
 class Hospital(SQLModel, table=True):
     """医院表"""
 
-    __tablename__ = "hospitals"
+    __tablename__ = "hospital"
 
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(max_length=100, description="医院名称")
@@ -136,7 +136,7 @@ class Hospital(SQLModel, table=True):
 class Department(SQLModel, table=True):
     """科室表"""
 
-    __tablename__ = "departments"
+    __tablename__ = "department"
 
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(max_length=50, unique=True, description="科室名称")
@@ -155,10 +155,10 @@ class Department(SQLModel, table=True):
 class MedicalRecord(SQLModel, table=True):
     """病历表"""
 
-    __tablename__ = "medical_records"
+    __tablename__ = "medical_record"
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    appointment_id: int = Field(foreign_key="appointments.id", description="预约ID")
+    appointment_id: int = Field(foreign_key="appointment.id", description="预约ID")
     diagnosis: str = Field(description="诊断结果")
     treatment: Optional[str] = Field(default=None, description="治疗方案")
     prescription: Optional[str] = Field(default=None, description="处方")
