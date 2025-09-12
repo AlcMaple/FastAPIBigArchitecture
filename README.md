@@ -253,3 +253,8 @@ python main.py
 * **日志记录**: Loguru
 * **API 文档**: Swagger UI / ReDoc
 * **类型检查**: Python Type Hints
+
+## 参考资料
+
+* **书籍**: 钟远晓. *FASTAPI WEB开发入门、进阶与实战*. 机械工业出版社, 2023. 本项目的框架基于该书的预约挂号系统实战部分进行了改写与完善
+* [Use singular nouns for database table names](https://www.teamten.com/lawrence/programming/use-singular-nouns-for-database-table-names.html)，数据库表名规范参考
