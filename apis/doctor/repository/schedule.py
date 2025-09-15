@@ -88,8 +88,7 @@ class ScheduleRepository:
         # 实际项目中的创建示例：
         # new_schedule = Schedule(**schedule_data)
         # db_session.add(new_schedule)
-        # await db_session.commit()
-        # await db_session.refresh(new_schedule)
+        # await db_session.flush()
 
         # 模拟创建排班
         schedule_id = 1000 + hash(str(schedule_data)) % 9000
@@ -119,7 +118,6 @@ class ScheduleRepository:
         # if schedule:
         #     for key, value in update_data.items():
         #         setattr(schedule, key, value)
-        #     await db_session.commit()
         #     await db_session.refresh(schedule)
 
         # 模拟更新（这里需要根据实际需要实现）
@@ -141,7 +139,6 @@ class ScheduleRepository:
         # schedule = result.scalar_one_or_none()
         # if schedule:
         #     await db_session.delete(schedule)
-        #     await db_session.commit()
         #     return True
 
         # 模拟删除

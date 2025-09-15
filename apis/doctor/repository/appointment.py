@@ -21,8 +21,6 @@ class AppointmentRepository:
         # 实际项目中的创建示例：
         # new_appointment = Appointment(**appointment_data)
         # db_session.add(new_appointment)
-        # await db_session.commit()
-        # await db_session.refresh(new_appointment)
 
         # 模拟创建预约
         appointment_id = 10000 + hash(str(appointment_data)) % 90000
@@ -134,7 +132,6 @@ class AppointmentRepository:
         # if appointment:
         #     for key, value in update_data.items():
         #         setattr(appointment, key, value)
-        #     await db_session.commit()
         #     await db_session.refresh(appointment)
 
         # 模拟更新
@@ -162,7 +159,6 @@ class AppointmentRepository:
         # appointment = result.scalar_one_or_none()
         # if appointment:
         #     await db_session.delete(appointment)
-        #     await db_session.commit()
         #     return True
 
         # 模拟删除

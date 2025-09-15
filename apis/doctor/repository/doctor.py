@@ -145,8 +145,7 @@ class DoctorRepository:
         # 实际项目中的创建示例：
         # new_doctor = Doctor(**doctor_data)
         # db_session.add(new_doctor)
-        # await db_session.commit()
-        # await db_session.refresh(new_doctor)
+        # await db_session.flush()
 
         # 模拟创建医生
         new_id = 100 + hash(str(doctor_data)) % 900
@@ -175,7 +174,6 @@ class DoctorRepository:
         # if doctor:
         #     for key, value in update_data.items():
         #         setattr(doctor, key, value)
-        #     await db_session.commit()
         #     await db_session.refresh(doctor)
 
         # 模拟更新
@@ -201,7 +199,6 @@ class DoctorRepository:
         # doctor = result.scalar_one_or_none()
         # if doctor:
         #     await db_session.delete(doctor)
-        #     await db_session.commit()
         #     return True
 
         # 模拟删除

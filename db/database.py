@@ -35,6 +35,10 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
             await session.close()
 
 
+'''
+函数正常结束 → 自动commit()
+抛出异常 → 自动rollback()
+'''
 @asynccontextmanager
 async def get_async_session_with_transaction() -> AsyncGenerator[AsyncSession, None]:
     """获取自动事务管理的异步数据库会话"""
