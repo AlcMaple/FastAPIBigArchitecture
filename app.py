@@ -15,6 +15,7 @@ from db.init_db import init_database
 from db.database import async_engine
 from exts.logururoute.config import setup_loggers
 from exts.logururoute.business_logger import logger
+from exts.exceptions.handlers import ApiExceptionHandler
 
 
 @asynccontextmanager
@@ -48,6 +49,10 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+# 初始化异常处理器
+exception_handler = ApiExceptionHandler()
+exception_handler.init_app(app)
 
 # 添加CORS中间件
 app.add_middleware(

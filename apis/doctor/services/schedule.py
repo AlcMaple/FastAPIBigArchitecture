@@ -25,7 +25,7 @@ class ScheduleService:
         # 检查医生是否存在
         doctor = await DoctorRepository.get_doctor_by_id(db_session, doctor_id)
         if not doctor:
-            return []
+            raise ValueError("医生信息不存在")
 
         schedules = await ScheduleRepository.get_doctor_schedules(
             db_session, doctor_id, days

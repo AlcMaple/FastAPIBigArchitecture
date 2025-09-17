@@ -110,7 +110,7 @@ class AppointmentService:
     @staticmethod
     async def get_appointment_detail(
         db_session: AsyncSession, appointment_id: int
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Dict[str, Any]:
         """
         获取预约详情
 
@@ -123,7 +123,7 @@ class AppointmentService:
         )
 
         if not appointment:
-            return None
+            raise ValueError("预约信息不存在")
 
         # 获取医生信息
         doctor = await DoctorRepository.get_doctor_by_id(

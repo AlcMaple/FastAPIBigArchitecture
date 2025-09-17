@@ -3,7 +3,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.exceptions import RequestValidationError
 from enum import Enum
 
-from exts.responses import (
+from exts.responses.json_response import (
     InternalServerErrorException,
     MethodnotallowedException,
     NotFoundException,
@@ -11,6 +11,7 @@ from exts.responses import (
     BadrequestException,
     ParameterException,
     Businesserror,
+    Fail,
 )
 
 
@@ -72,14 +73,18 @@ class ApiExceptionHandler:
             self.init_app(app)
 
     def init_app(self, app: FastAPI):
-        app.add_exception_handler(Exception, handler=self.all_exception_handler)
+        app.add_exception_handler(ValueError, handler=self.value_error_handler)
+        app.add_exception_handler(AttributeError, handler=self.attribute_error_handler)
         app.add_exception_handler(
-            StarletteHTTPException, handler=self.http_exception_handler
+            BusinessError, handler=self.all_businewsserror_handler
         )
-        app.add_exception_handler(BusinessError, handler=self.all_businesserror_handler)
         app.add_exception_handler(
             RequestValidationError, handler=self.validation_exception_handler
         )
+        app.add_exception_handler(
+            StarletteHTTPException, handler=self.http_exception_handler
+        )
+        app.add_exception_handler(Exception, handler=self.all_exception_handler)
 
     async def validation_exception_handler(
         self, request: Request, exc: RequestValidationError
@@ -100,6 +105,14 @@ class ApiExceptionHandler:
         return Businesserror(
             http_status_code=200, api_code=exc.err_code, message=exc.err_code_des
         )
+
+    async def value_error_handler(self, request: Request, exc: ValueError):
+        """处理ValueError"""
+        return Fail(message=str(exc))
+
+    async def attribute_error_handler(self, request: Request, exc: AttributeError):
+        """处理AttributeError"""
+        return Fail(message=f"属性错误: {str(exc)}")
 
     async def all_exception_handler(self, request: Request, exc: Exception):
         """对顶层所有的Exception进行处理"""

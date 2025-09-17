@@ -157,7 +157,7 @@ class DoctorRepository:
     @staticmethod
     async def update_doctor(
         db_session: AsyncSession, doctor_id: int, update_data: Dict[str, Any]
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Dict[str, Any]:
         """
         更新医生信息
 
@@ -181,7 +181,7 @@ class DoctorRepository:
         if doctor:
             doctor.update(update_data)
             return doctor
-        return None
+        raise ValueError("Doctor not found")
 
     @staticmethod
     async def delete_doctor(db_session: AsyncSession, doctor_id: int) -> bool:
