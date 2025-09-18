@@ -2,9 +2,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-# 导入路由分组
-from apis import router_doctor, router_appointment
-
 # 导入中间件
 from middlewares.logger.middleware import LogerMiddleware
 
@@ -20,6 +17,9 @@ from db.init_db import init_database
 from db.database import async_engine
 from exts.logururoute.business_logger import logger
 from exts.exceptions.handlers import ApiExceptionHandler
+
+# 导入路由分组
+from apis import router_doctor, router_appointment
 
 
 @asynccontextmanager
