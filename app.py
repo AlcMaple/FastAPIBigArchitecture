@@ -2,23 +2,28 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-# 导入路由分组
-from apis import router_doctor
 
 # 导入中间件
 from middlewares.logger.middleware import LogerMiddleware
 
 # 导入配置
 from config.settings import settings
+
+# 日志配置
 from exts.logururoute.config import setup_loggers
+
+setup_loggers("./")
 from exts.logururoute.business_logger import logger
+
+from exts.exceptions.handlers import ApiExceptionHandler
+
+# 导入路由分组
+from apis import router_doctor
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """应用生命周期管理"""
-    # 初始化中间件日志
-    setup_loggers("./")
 
     # 启动时的初始化代码
     logger.info("启动 fastapi arch")
@@ -36,6 +41,10 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+# 初始化异常处理器
+exception_handler = ApiExceptionHandler()
+exception_handler.init_app(app)
 
 # 添加CORS中间件
 app.add_middleware(
