@@ -1,7 +1,11 @@
-from loguru import logger as _http_logger
 import os
 from sys import stdout
 import json
+
+# 创建专门用于中间件的logger实例
+from loguru import logger
+
+_http_logger = logger.bind(middleware=True)
 
 
 def setup_loggers(project_root: str = "./"):
@@ -9,13 +13,22 @@ def setup_loggers(project_root: str = "./"):
     # 测试环境，不配置日志
     if os.environ.get("TESTING") == "true":
         return
+    logger.remove()
 
     # 控制台输出配置
-    LOGURU_FORMAT: str = (
+    console_format = (
         "<cyan>{time:YYYY-MM-DD HH:mm:ss.SSS}</cyan> │ "
-        "<level>{level: <8}</level> │ {message}"
+        "<level>{level: <8}</level> │ "
+        "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> │ {message}"
     )
-    _http_logger.configure(handlers=[{"sink": stdout, "format": LOGURU_FORMAT}])
+
+    # 添加控制台输出处理器
+    logger.add(
+        stdout,
+        format=console_format,
+        level="DEBUG",
+        enqueue=True,
+    )
 
     # HTTP访问日志配置
     prod_dir = os.path.join(project_root, "log/prod")
@@ -25,26 +38,31 @@ def setup_loggers(project_root: str = "./"):
     info_log_path = os.path.join(prod_dir, "info_{time:YYYYMMDD}.log")
     error_log_path = os.path.join(prod_dir, "error_{time:YYYYMMDD}.log")
 
+    # 为中间件日志添加专用的处理器，只处理middleware标记的日志
     # INFO级别日志
     format2 = " {time:YYYY-MM-DD HH:mm:ss.SSS} | thread_id:{thread.id} thread_name:{thread.name} | {level} | {message}"
-    _http_logger.add(
+    logger.add(
         info_log_path,
         format=format2,
         rotation="00:00",
         encoding="utf-8",
         level="INFO",
         enqueue=True,
+        filter=lambda record: "middleware"
+        in record.get("extra", {}),  # 只记录中间件日志
     )
 
     # ERROR级别日志
     format1 = " {time:YYYY-MM-DD HH:mm:ss.SSS} | thread_id:{thread.id} thread_name:{thread.name} | {level} |\n {message}"
-    _http_logger.add(
+    logger.add(
         error_log_path,
         format=format1,
         rotation="00:00",
         encoding="utf-8",
         level="ERROR",
         enqueue=True,
+        filter=lambda record: "middleware"
+        in record.get("extra", {}),  # 只记录中间件日志
     )
 
 

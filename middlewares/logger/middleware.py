@@ -165,7 +165,7 @@ class LogerMiddleware:
                 # 记录请求提交的参数信息
                 "params": {
                     "query_params": parse_qs(str(request.query_params)),
-                    "from": body_form,
+                    "from": dict(body_form) if body_form else None,
                     "body": body,
                 },
                 "ts": f"{datetime.now():%Y-%m-%d %H:%M:%S%z}",
@@ -189,7 +189,7 @@ class LogerMiddleware:
                 "ip": ip,
                 "params": {
                     "query_params": parse_qs(str(request.query_params)),
-                    "from": body_form,
+                    "from": dict(body_form) if body_form else None,
                     "body": body,
                 },
                 "ts": f"{datetime.now():%Y-%m-%d %H:%M:%S%z}",

@@ -11,9 +11,13 @@ from middlewares.logger.middleware import LogerMiddleware
 # 导入配置
 from config.settings import settings
 
+# 日志配置
+from exts.logururoute.config import setup_loggers
+
+setup_loggers("./")
+
 from db.init_db import init_database
 from db.database import async_engine
-from exts.logururoute.config import setup_loggers
 from exts.logururoute.business_logger import logger
 from exts.exceptions.handlers import ApiExceptionHandler
 
@@ -21,8 +25,6 @@ from exts.exceptions.handlers import ApiExceptionHandler
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """应用生命周期管理"""
-    # 初始化中间件日志
-    setup_loggers("./")
 
     # 启动时的初始化代码
     logger.info("启动 fastapi arch")

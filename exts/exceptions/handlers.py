@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request, HTTPException
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.exceptions import RequestValidationError
 from enum import Enum
+import traceback
 
 from exts.responses.json_response import (
     InternalServerErrorException,
@@ -13,6 +14,7 @@ from exts.responses.json_response import (
     Businesserror,
     Fail,
 )
+from exts.logururoute.business_logger import logger
 
 
 class ExceptionEnum(Enum):
@@ -90,6 +92,8 @@ class ApiExceptionHandler:
         self, request: Request, exc: RequestValidationError
     ):
         """处理RequestValidationError"""
+        logger.error(f"{request.url}")
+        logger.error(f"{exc.errors()}")
         return ParameterException(
             http_status_code=400,
             api_code=400,
@@ -102,26 +106,44 @@ class ApiExceptionHandler:
 
     async def all_businewsserror_handler(self, request: Request, exc: BusinessError):
         """处理BusinessError"""
+        logger.error(f"{request.url}")
+        logger.error(f"{exc.err_code}")
+        logger.error(f"{exc.err_code_des}")
         return Businesserror(
             http_status_code=200, api_code=exc.err_code, message=exc.err_code_des
         )
 
     async def value_error_handler(self, request: Request, exc: ValueError):
         """处理ValueError"""
+        error_trace = traceback.format_exc()
+        logger.error(f"{request.url}")
+        logger.error(f"{type(exc).__name__}")
+        logger.error(f"{str(exc)}")
         return Fail(message=str(exc))
 
     async def attribute_error_handler(self, request: Request, exc: AttributeError):
         """处理AttributeError"""
+        error_trace = traceback.format_exc()
+        logger.error(f"{request.url}")
+        logger.error(f"{type(exc).__name__}")
+        logger.error(f"{str(exc)}")
         return Fail(message=f"属性错误: {str(exc)}")
 
     async def all_exception_handler(self, request: Request, exc: Exception):
         """对顶层所有的Exception进行处理"""
+        error_trace = traceback.format_exc()
+        logger.error(f"{request.url}")
+        logger.error(f"{type(exc).__name__}")
+        logger.error(f"{str(exc)}")
         return InternalServerErrorException()
 
     async def http_exception_handler(
         self, request: Request, exc: StarletteHTTPException
     ):
         """处理相关的HTTPException，根据不同状态码返回不同类型的响应报文"""
+        logger.error(f"{request.url}")
+        logger.error(f"{exc.status_code}")
+        logger.error(f"{exc.detail}")
         if exc.status_code == 405:
             return MethodnotallowedException()
         elif exc.status_code == 404:
