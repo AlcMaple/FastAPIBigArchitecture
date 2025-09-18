@@ -174,8 +174,7 @@ class DoctorRepository:
         # if doctor:
         #     for key, value in update_data.items():
         #         setattr(doctor, key, value)
-        #     await db_session.refresh(doctor)
-
+        
         # 模拟更新
         doctor = await DoctorRepository.get_doctor_by_id(db_session, doctor_id)
         if doctor:

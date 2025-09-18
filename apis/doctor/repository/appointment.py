@@ -132,7 +132,6 @@ class AppointmentRepository:
         # if appointment:
         #     for key, value in update_data.items():
         #         setattr(appointment, key, value)
-        #     await db_session.refresh(appointment)
 
         # 模拟更新
         appointment = await AppointmentRepository.get_appointment_by_id(

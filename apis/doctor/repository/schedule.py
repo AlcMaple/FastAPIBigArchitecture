@@ -118,7 +118,6 @@ class ScheduleRepository:
         # if schedule:
         #     for key, value in update_data.items():
         #         setattr(schedule, key, value)
-        #     await db_session.refresh(schedule)
 
         # 模拟更新（这里需要根据实际需要实现）
         return None
