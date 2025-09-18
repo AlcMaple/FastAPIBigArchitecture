@@ -78,6 +78,7 @@ class ApiExceptionHandler:
         app.add_exception_handler(ValueError, handler=self.value_error_handler)
         app.add_exception_handler(AttributeError, handler=self.attribute_error_handler)
         app.add_exception_handler(TypeError, handler=self.type_error_handler)
+        app.add_exception_handler(KeyError, handler=self.key_error_handler)
         app.add_exception_handler(
             BusinessError, handler=self.all_businewsserror_handler
         )
@@ -137,6 +138,14 @@ class ApiExceptionHandler:
         logger.error(f"{type(exc).__name__}")
         logger.error(f"{str(exc)}")
         return Fail(message=f"类型错误: {str(exc)}")
+
+    async def key_error_handler(self, request: Request, exc: KeyError):
+        """处理KeyError"""
+        error_trace = traceback.format_exc()
+        logger.error(f"{request.url}")
+        logger.error(f"{type(exc).__name__}")
+        logger.error(f"{str(exc)}")
+        return Fail(message=f"缺少必需的字段: {str(exc)}")
 
     async def all_exception_handler(self, request: Request, exc: Exception):
         """对顶层所有的Exception进行处理"""
