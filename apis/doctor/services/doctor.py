@@ -1,8 +1,16 @@
 from typing import Dict, List, Optional, Any
+from datetime import date
+from fastapi import UploadFile
 
 from ..repository.doctor import DoctorRepository
-from ..schemas.doctor import DoctorCreateRequest, DoctorUpdateRequest
+from ..schemas.doctor import (
+    DoctorCreateRequest,
+    DoctorUpdateRequest,
+    DoctorAvatarUploadResponse,
+)
 from exts.logururoute.business_logger import logger
+from utils.file import FileUtils
+from utils.datetime import diff_days_for_now_time
 
 
 class DoctorService:
@@ -17,6 +25,13 @@ class DoctorService:
         """
         all_doctors = await DoctorRepository.get_all_doctors()
 
+        # 计算工作天数
+        for doctor in all_doctors:
+            if doctor.get("hire_date"):
+                doctor["work_days"] = diff_days_for_now_time(doctor["hire_date"]) * -1
+            else:
+                doctor["work_days"] = None
+
         return {"doctors": all_doctors, "total": len(all_doctors)}
 
     @staticmethod
@@ -27,7 +42,11 @@ class DoctorService:
         :param doctor_id: 医生ID
         :return: 医生详细信息
         """
-        return await DoctorRepository.get_doctor_by_id(doctor_id)
+        doctor = await DoctorRepository.get_doctor_by_id(doctor_id)
+        if doctor and doctor.get("hire_date"):
+            doctor["work_days"] = diff_days_for_now_time(doctor["hire_date"]) * -1
+
+        return doctor
 
     @staticmethod
     async def create_doctor(doctor_request: DoctorCreateRequest) -> Dict[str, Any]:
@@ -105,3 +124,60 @@ class DoctorService:
             raise ValueError("删除医生失败")
 
         return success
+
+    @staticmethod
+    async def upload_doctor_avatar(
+        doctor_id: int, avatar_file: UploadFile
+    ) -> Dict[str, Any]:
+        """
+        上传医生头像
+
+        :param doctor_id: 医生ID
+        :param avatar_file: 头像文件
+        :return: 上传结果
+        """
+        # 检查医生是否存在
+        doctor = await DoctorRepository.get_doctor_by_id(doctor_id)
+        if not doctor:
+            raise ValueError("医生信息不存在")
+
+        try:
+            # 使用FileUtils保存头像文件
+            avatar_path = await FileUtils.save_damage_image(avatar_file)
+
+            # 更新医生头像路径
+            update_data = {"avatar": avatar_path}
+            await DoctorRepository.update_doctor(doctor_id, update_data)
+
+            logger.info(f"医生 {doctor_id} 头像上传成功: {avatar_path}")
+
+            return {"avatar_path": avatar_path, "message": "头像上传成功"}
+
+        except ValueError as e:
+            logger.error(f"医生 {doctor_id} 头像上传失败: {str(e)}")
+            raise e
+        except Exception as e:
+            logger.error(f"医生 {doctor_id} 头像上传异常: {str(e)}")
+            raise ValueError(f"头像上传失败: {str(e)}")
+
+    @staticmethod
+    async def calculate_work_experience(hire_date: date) -> Dict[str, Any]:
+        """
+        计算医生工作经验
+
+        :param hire_date: 入职日期
+        :return: 工作经验信息
+        """
+        if not hire_date:
+            raise ValueError("入职日期不能为空")
+
+        work_days = diff_days_for_now_time(hire_date) * -1
+        work_years = work_days // 365
+        remaining_days = work_days % 365
+
+        return {
+            "work_days": work_days,
+            "work_years": work_years,
+            "remaining_days": remaining_days,
+            "hire_date": hire_date.isoformat(),
+        }

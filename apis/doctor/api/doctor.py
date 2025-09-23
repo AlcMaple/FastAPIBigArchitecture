@@ -1,9 +1,14 @@
-from fastapi import Path
+from fastapi import Path, UploadFile, File
+from datetime import date
 
 from ..services.doctor import DoctorService
 from exts.responses.json_response import Success, Fail
 from . import router_doctor
-from ..schemas.doctor import DoctorCreateRequest, DoctorUpdateRequest
+from ..schemas.doctor import (
+    DoctorCreateRequest,
+    DoctorUpdateRequest,
+    DoctorAvatarUploadResponse,
+)
 
 
 @router_doctor.get("/doctors", summary="获取所有医生列表信息")
@@ -91,3 +96,43 @@ async def delete_doctor(doctor_id: int = Path(..., description="医生ID")):
         return Fail(message=str(e), api_code=404 if "不存在" in str(e) else 400)
     except Exception as e:
         return Fail(message=f"删除医生失败: {str(e)}")
+
+
+@router_doctor.post("/doctor/{doctor_id}/avatar", summary="上传医生头像")
+async def upload_doctor_avatar(
+    doctor_id: int = Path(..., description="医生ID"),
+    avatar: UploadFile = File(..., description="医生头像文件"),
+):
+    """
+    上传医生头像
+
+    :param doctor_id: 医生ID
+    :param avatar: 头像文件
+    :return: 上传结果
+    """
+    try:
+        result = await DoctorService.upload_doctor_avatar(doctor_id, avatar)
+        return Success(result=result, message="头像上传成功")
+    except ValueError as e:
+        return Fail(message=str(e), api_code=404 if "不存在" in str(e) else 400)
+    except Exception as e:
+        return Fail(message=f"头像上传失败: {str(e)}")
+
+
+@router_doctor.get("/doctor/experience/{hire_date}", summary="计算工作经验")
+async def calculate_work_experience(
+    hire_date: date = Path(..., description="入职日期 (格式: YYYY-MM-DD)")
+):
+    """
+    计算医生工作经验
+
+    :param hire_date: 入职日期
+    :return: 工作经验信息
+    """
+    try:
+        result = await DoctorService.calculate_work_experience(hire_date)
+        return Success(result=result, message="工作经验计算成功")
+    except ValueError as e:
+        return Fail(message=str(e))
+    except Exception as e:
+        return Fail(message=f"计算工作经验失败: {str(e)}")
