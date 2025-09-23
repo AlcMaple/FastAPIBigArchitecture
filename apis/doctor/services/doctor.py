@@ -1,9 +1,11 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Dict, List, Optional, Any
+from fastapi import UploadFile
 
 from ..repository.doctor import DoctorRepository
 from ..schemas.doctor import DoctorCreateRequest, DoctorUpdateRequest
 from exts.logururoute.business_logger import logger
+from utils.file import FileUtils
 
 
 class DoctorService:
@@ -153,3 +155,32 @@ class DoctorService:
             raise ValueError("删除医生失败")
 
         return success
+
+    @staticmethod
+    async def upload_doctor_document(
+        db_session: AsyncSession, doctor_id: int, file: UploadFile
+    ) -> Dict[str, Any]:
+        """
+        上传医生相关文档或图片
+
+        :param db_session: 数据库会话对象
+        :param doctor_id: 医生ID
+        :param file: 上传的文件
+        :return: 文件上传结果
+        """
+        # 检查医生是否存在
+        doctor = await DoctorRepository.get_doctor_by_id(db_session, doctor_id)
+        if not doctor:
+            raise ValueError("医生信息不存在")
+
+        # 使用FileUtil保存文件
+        file_path = await FileUtils.save_damage_image(file)
+
+        logger.info(f"医生 {doctor_id} 文档上传成功: {file_path}")
+
+        return {
+            "doctor_id": doctor_id,
+            "file_path": file_path,
+            "original_filename": file.filename,
+            "content_type": file.content_type,
+        }

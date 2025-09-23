@@ -6,7 +6,7 @@ from ..repository.doctor import DoctorRepository
 from ..repository.appointment import AppointmentRepository
 from ..schemas.appointment import AppointmentRequest, AppointmentUpdateRequest
 from .schedule import ScheduleService
-from utils.datetime_helper import diff_days_for_now_time
+from utils.datetime import diff_days_for_now_time
 
 
 class AppointmentService:

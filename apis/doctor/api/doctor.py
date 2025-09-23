@@ -1,4 +1,4 @@
-from fastapi import Depends, Query, Path
+from fastapi import Depends, Query, Path, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..services.appointment import AppointmentService
@@ -149,3 +149,21 @@ async def get_doctor_appointments(
     """
     result = await AppointmentService.get_doctor_appointments(db_session, doctor_id)
     return Success(result=result)
+
+
+@router_doctor.post("/doctor/{doctor_id}/upload-document", summary="上传医生相关文档或图片")
+async def upload_doctor_document(
+    doctor_id: int = Path(..., description="医生ID"),
+    file: UploadFile = File(..., description="上传的文件"),
+    db_session: AsyncSession = Depends(depends_get_db_session),
+):
+    """
+    上传医生相关文档或图片
+
+    :param doctor_id: 医生ID
+    :param file: 上传的文件
+    :param db_session: 数据库连接依赖注入对象
+    :return: 上传结果和文件路径
+    """
+    result = await DoctorService.upload_doctor_document(db_session, doctor_id, file)
+    return Success(result=result, message="文件上传成功")
