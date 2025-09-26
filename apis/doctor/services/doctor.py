@@ -161,7 +161,7 @@ class DoctorService:
         db_session: AsyncSession, doctor_id: int, file: UploadFile
     ) -> Dict[str, Any]:
         """
-        上传医生相关文档或图片
+        上传医生相关文档或图片（不保存到数据库）
 
         :param db_session: 数据库会话对象
         :param doctor_id: 医生ID
@@ -183,4 +183,66 @@ class DoctorService:
             "file_path": file_path,
             "original_filename": file.filename,
             "content_type": file.content_type,
+        }
+
+    @staticmethod
+    async def upload_doctor_avatar(
+        db_session: AsyncSession, doctor_id: int, avatar_file: UploadFile
+    ) -> Dict[str, Any]:
+        """
+        上传医生头像并保存到数据库
+
+        实际项目中应该：
+        1. 验证文件格式（仅支持图片）
+        2. 检查文件大小限制
+        3. 保存文件到指定目录
+        4. 更新数据库中医生的头像字段
+        5. 删除旧头像文件（如果存在）
+
+        :param db_session: 数据库会话对象
+        :param doctor_id: 医生ID
+        :param avatar_file: 上传的头像文件
+        :return: 头像上传结果
+        """
+        try:
+            # 调用Repository层处理头像上传和数据库保存
+            result = await DoctorRepository.upload_doctor_avatar(
+                db_session, doctor_id, avatar_file
+            )
+
+            logger.info(f"医生 {doctor_id} 头像上传成功: {result['avatar']}")
+
+            return result
+
+        except ValueError as e:
+            logger.error(f"医生 {doctor_id} 头像上传失败: {str(e)}")
+            raise e
+        except Exception as e:
+            logger.error(f"医生 {doctor_id} 头像上传出现未知错误: {str(e)}")
+            raise ValueError("头像上传失败，请稍后重试")
+
+    @staticmethod
+    async def get_doctor_avatar(
+        db_session: AsyncSession, doctor_id: int
+    ) -> Dict[str, Any]:
+        """
+        获取医生头像信息
+
+        :param db_session: 数据库会话对象
+        :param doctor_id: 医生ID
+        :return: 头像信息
+        """
+        # 检查医生是否存在
+        doctor = await DoctorRepository.get_doctor_by_id(db_session, doctor_id)
+        if not doctor:
+            raise ValueError("医生信息不存在")
+
+        # 获取头像路径
+        avatar_path = await DoctorRepository.get_doctor_avatar(db_session, doctor_id)
+
+        return {
+            "doctor_id": doctor_id,
+            "doctor_name": doctor["name"],
+            "avatar": avatar_path,
+            "has_avatar": avatar_path is not None,
         }

@@ -1,6 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import List, Optional, Dict, Any
+from fastapi import UploadFile
+from utils.file import FileUtils
 
 
 class DoctorRepository:
@@ -174,7 +176,7 @@ class DoctorRepository:
         # if doctor:
         #     for key, value in update_data.items():
         #         setattr(doctor, key, value)
-        
+
         # 模拟更新
         doctor = await DoctorRepository.get_doctor_by_id(db_session, doctor_id)
         if doctor:
@@ -203,3 +205,81 @@ class DoctorRepository:
         # 模拟删除
         doctor = await DoctorRepository.get_doctor_by_id(db_session, doctor_id)
         return doctor is not None
+
+    @staticmethod
+    async def upload_doctor_avatar(
+        db_session: AsyncSession, doctor_id: int, avatar_file: UploadFile
+    ) -> Dict[str, Any]:
+        """
+        上传医生头像并保存到数据库
+
+        实际项目中的实现示例：
+        1. 使用 FileUtils.save_damage_image() 保存图片文件
+        2. 查询数据库中的医生记录
+        3. 更新医生记录的 avatar 字段
+        4. 提交数据库事务
+
+        示例数据库操作：
+        # result = await db_session.execute(
+        #     select(Doctor).where(Doctor.id == doctor_id)
+        # )
+        # doctor = result.scalar_one_or_none()
+        # if not doctor:
+        #     raise ValueError("医生不存在")
+        #
+        # # 保存图片文件并获取相对路径
+        # avatar_path = await FileUtils.save_damage_image(avatar_file)
+        #
+        # # 更新医生头像字段
+        # doctor.avatar = avatar_path
+        # doctor.updated_at = datetime.now()
+        #
+        # # 提交到数据库
+        # await db_session.refresh(doctor)
+
+        :param db_session: 数据库会话对象
+        :param doctor_id: 医生ID
+        :param avatar_file: 上传的头像文件
+        :return: 更新后的医生信息，包含头像路径
+        """
+        # 检查医生是否存在
+        doctor = await DoctorRepository.get_doctor_by_id(db_session, doctor_id)
+        if not doctor:
+            raise ValueError("医生不存在")
+
+        # 保存图片文件并获取相对路径
+        avatar_path = await FileUtils.save_damage_image(avatar_file)
+
+        # 模拟更新医生头像
+        doctor["avatar"] = avatar_path
+        doctor["updated_at"] = "2024-01-01 12:00:00"  # 模拟更新时间
+
+        return {
+            "id": doctor["id"],
+            "name": doctor["name"],
+            "avatar": avatar_path,
+            "message": "头像上传成功",
+        }
+
+    @staticmethod
+    async def get_doctor_avatar(
+        db_session: AsyncSession, doctor_id: int
+    ) -> Optional[str]:
+        """
+        获取医生头像路径
+
+        实际项目中的实现示例：
+        # result = await db_session.execute(
+        #     select(Doctor.avatar).where(Doctor.id == doctor_id)
+        # )
+        # avatar_path = result.scalar_one_or_none()
+        # return avatar_path
+
+        :param db_session: 数据库会话对象
+        :param doctor_id: 医生ID
+        :return: 头像文件路径，如果不存在返回None
+        """
+        doctor = await DoctorRepository.get_doctor_by_id(db_session, doctor_id)
+        if doctor:
+            return doctor.get("avatar")
+        return None

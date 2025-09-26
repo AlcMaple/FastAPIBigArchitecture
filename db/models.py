@@ -28,6 +28,7 @@ class Doctor(SQLModel, table=True):
     email: Optional[str] = Field(default=None, max_length=100, description="邮箱")
     years_experience: Optional[int] = Field(default=None, description="从业年限")
     introduction: Optional[str] = Field(default=None, description="医生简介")
+    avatar: Optional[str] = Field(default=None, max_length=500, description="医生头像图片路径")
     created_at: datetime = Field(default_factory=datetime.now, description="创建时间")
     updated_at: datetime = Field(default_factory=datetime.now, description="更新时间")
 

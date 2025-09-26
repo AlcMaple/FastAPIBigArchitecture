@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+from fastapi.staticfiles import StaticFiles
+import os
 
 # 导入中间件
 from middlewares.logger.middleware import LogerMiddleware
@@ -65,20 +67,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 添加日志中间件
-app.add_middleware(
-    LogerMiddleware,
-    is_record_useragent=True,  # 记录用户代理信息
-    is_record_headers=False,  # 不记录请求头信息
-    nesss_access_heads_keys=[],  # 不记录特定请求头
-    ignore_url=[
-        "/favicon.ico",
-        "/health",
-        "/docs",
-        "/redoc",
-        "/openapi.json",
-    ],  # 忽略的URL
-)
+# # 添加日志中间件
+# app.add_middleware(
+#     LogerMiddleware,
+#     is_record_useragent=True,  # 记录用户代理信息
+#     is_record_headers=False,  # 不记录请求头信息
+#     nesss_access_heads_keys=[],  # 不记录特定请求头
+#     ignore_url=[
+#         "/favicon.ico",
+#         "/health",
+#         "/docs",
+#         "/redoc",
+#         "/openapi.json",
+#         "/static",
+#     ],  # 忽略的URL
+# )
+
+# 配置静态文件服务
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # 注册路由分组
 app.include_router(router_doctor)
