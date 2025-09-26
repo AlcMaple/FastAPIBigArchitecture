@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+from fastapi.staticfiles import StaticFiles
+import os
 
 
 # 导入中间件
@@ -67,8 +69,12 @@ app.add_middleware(
         "/docs",
         "/redoc",
         "/openapi.json",
+        "/static",
     ],  # 忽略的URL
 )
+
+# 配置静态文件服务
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # 注册路由分组
 app.include_router(router_doctor)
