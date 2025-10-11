@@ -120,10 +120,5 @@ dmypy.json
 # static
 static/
 
-# Ignore all dotfiles
-.*
-!.gitignore
-!.env.example
-!.env.dev.example
-!.env.prod.example
-!.env.test.example
+# others
+.record.md
