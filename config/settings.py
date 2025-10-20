@@ -26,6 +26,12 @@ class Settings(BaseSettings):
     pool_recycle: int = 3600
     pool_timeout: int = 30
 
+    # 测试数据导入脚本配置（按执行顺序）
+    test_data_import_scripts: list[str] = [
+        # "utils/import_bridge_base_data.py",
+        # "utils/update_base_details.py",
+    ]
+
     model_config = ConfigDict(env_file=".env", env_file_encoding="utf-8")
 
     @computed_field

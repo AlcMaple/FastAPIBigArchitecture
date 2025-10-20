@@ -4,6 +4,7 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 import logging
 import os
+import subprocess
 
 # 确保运行到项目根目录
 sys.path.append(str(Path(__file__).parent.parent))
@@ -31,6 +32,26 @@ def setup_and_teardown_test_tables():
     # 前置：创建测试数据库表
     if not create_tables_sync():
         raise Exception(f"Failed to create {settings.test_db_type} test tables")
+
+    # 导入基础数据
+    print("开始导入测试基础数据...")
+    project_root = Path(__file__).parent.parent
+
+    for script_path in settings.test_data_import_scripts:
+        script_name = Path(script_path).stem
+        print(f"执行: {script_path}")
+
+        result = subprocess.run(
+            [sys.executable, script_path],
+            cwd=project_root,
+            capture_output=True,
+            text=True,
+        )
+
+        if result.returncode != 0:
+            print(f"  {script_name} 执行失败: {result.stderr}")
+        else:
+            print(f"  {script_name} 执行成功")
 
     yield  # 测试运行期间
 
