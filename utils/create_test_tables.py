@@ -30,7 +30,9 @@ async def create_test_tables():
     except Exception as e:
         return False
     finally:
-        await manager.dispose_engine()
+        # MySQL 测试数据库需要关闭数据库引擎
+        if settings.test_db_type != "sqlite":
+            await manager.dispose_engine()
 
 
 def create_tables_sync():
