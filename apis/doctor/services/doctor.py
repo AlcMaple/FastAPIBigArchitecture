@@ -6,6 +6,8 @@ from ..repository.doctor import DoctorRepository
 from ..schemas.doctor import DoctorCreateRequest, DoctorUpdateRequest
 from exts.logururoute.business_logger import logger
 from utils.file import FileUtils
+from exts.exceptions.api_exception import ApiException
+from exts.exceptions.error_code import ErrorCode
 
 
 class DoctorService:
@@ -88,10 +90,10 @@ class DoctorService:
 
         # 业务逻辑验证
         if not doctor_data.get("name"):
-            raise ValueError("医生姓名不能为空")
+            raise ApiException(ErrorCode.MISSING_PARAMETER, "医生姓名不能为空")
 
         if not doctor_data.get("department"):
-            raise ValueError("科室不能为空")
+            raise ApiException(ErrorCode.MISSING_PARAMETER, "科室不能为空")
 
         # 调用Repository层创建医生
         new_doctor = await DoctorRepository.create_doctor(db_session, doctor_data)
@@ -113,13 +115,13 @@ class DoctorService:
         # 检查医生是否存在
         doctor = await DoctorRepository.get_doctor_by_id(db_session, doctor_id)
         if not doctor:
-            raise ValueError("医生信息不存在")
+            raise ApiException(ErrorCode.NOT_FOUND, "医生信息不存在")
 
         # 过滤掉None值
         update_data = {k: v for k, v in doctor_request.dict().items() if v is not None}
 
         if not update_data:
-            raise ValueError("没有需要更新的数据")
+            raise ApiException(ErrorCode.PARAMETER_ERROR, "没有需要更新的数据")
 
         # 调用Repository层更新医生
         updated_doctor = await DoctorRepository.update_doctor(
@@ -127,7 +129,7 @@ class DoctorService:
         )
 
         if not updated_doctor:
-            raise ValueError("更新医生信息失败")
+            raise ApiException(ErrorCode.BUSINESS_ERROR, "更新医生信息失败")
 
         return updated_doctor
 
@@ -143,7 +145,7 @@ class DoctorService:
         # 检查医生是否存在
         doctor = await DoctorRepository.get_doctor_by_id(db_session, doctor_id)
         if not doctor:
-            raise ValueError("医生信息不存在")
+            raise ApiException(ErrorCode.NOT_FOUND, "医生信息不存在")
 
         # TODO: 这里可以添加业务逻辑检查
         # 例如：检查医生是否有未完成的预约等
@@ -152,7 +154,7 @@ class DoctorService:
         success = await DoctorRepository.delete_doctor(db_session, doctor_id)
 
         if not success:
-            raise ValueError("删除医生失败")
+            raise ApiException(ErrorCode.BUSINESS_ERROR, "删除医生失败")
 
         return success
 
@@ -171,7 +173,7 @@ class DoctorService:
         # 检查医生是否存在
         doctor = await DoctorRepository.get_doctor_by_id(db_session, doctor_id)
         if not doctor:
-            raise ValueError("医生信息不存在")
+            raise ApiException(ErrorCode.NOT_FOUND, "医生信息不存在")
 
         # 使用FileUtil保存文件
         file_path = await FileUtils.save_damage_image(file)
@@ -219,7 +221,7 @@ class DoctorService:
             raise e
         except Exception as e:
             logger.error(f"医生 {doctor_id} 头像上传出现未知错误: {str(e)}")
-            raise ValueError("头像上传失败，请稍后重试")
+            raise ApiException(ErrorCode.BUSINESS_ERROR, "头像上传失败，请稍后重试")
 
     @staticmethod
     async def get_doctor_avatar(
@@ -235,7 +237,7 @@ class DoctorService:
         # 检查医生是否存在
         doctor = await DoctorRepository.get_doctor_by_id(db_session, doctor_id)
         if not doctor:
-            raise ValueError("医生信息不存在")
+            raise ApiException(ErrorCode.NOT_FOUND, "医生信息不存在")
 
         # 获取头像路径
         avatar_path = await DoctorRepository.get_doctor_avatar(db_session, doctor_id)
