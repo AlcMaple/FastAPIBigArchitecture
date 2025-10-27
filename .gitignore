@@ -119,3 +119,6 @@ dmypy.json
 
 # static
 static/
+
+# others
+.record.md
