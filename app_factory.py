@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from config.settings import settings
-from exts.exceptions.handlers import ApiExceptionHandler
+from exts.exceptions.exception_handler import GlobalExceptionHandler
 
 
 class AppFactory:
@@ -119,7 +119,7 @@ class AppFactory:
 
     def _setup_exception_handling(self, app: FastAPI):
         """配置全局异常处理"""
-        exception_handler = ApiExceptionHandler()
+        exception_handler = GlobalExceptionHandler()
         exception_handler.init_app(app)
 
 

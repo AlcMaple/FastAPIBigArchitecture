@@ -67,8 +67,8 @@ FastAPIBigArchitecture/
 │   ├── doctor
 │   │   ├── api
 │   │   │   ├── __init__.py
+│   │   │   ├── appointment.py
 │   │   │   └── doctor.py
-│   │   ├── dependencies
 │   │   ├── repository
 │   │   │   ├── appointment.py
 │   │   │   ├── doctor.py
@@ -103,18 +103,29 @@ FastAPIBigArchitecture/
 │   └── logger
 │       └── middleware.py
 ├── plugins
-├── static
 ├── testcase
+│   ├── test_integration
+│   │   ├── test_appointment_api.py
+│   │   └── test_doctor_api.py
+│   ├── test_unit
+│   │   ├── test_datetime.py
+│   │   └── test_file.py
 │   ├── conftest.py
-│   └── test_sync_api.py
+│   ├── factories.py
+│   └── manager.py
 ├── utils
-│   └── datetime_helper.py
+│   ├── create_test_tables.py
+│   ├── datetime.py
+│   ├── drop_test_tables.py
+│   └── file.py
 ├── wiki
-│   ├── db.md
-│   ├── logger.md
-│   └── test.md
+│   ├── Database.md
+│   ├── home.md
+│   ├── Logger.md
+│   └── Test.md
 ├── .env.example
 ├── .gitignore
+├── app_factory.py
 ├── app.py
 ├── CLAUDE.md
 ├── main.py
