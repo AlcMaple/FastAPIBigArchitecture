@@ -11,10 +11,7 @@ from config.settings import settings
 async_engine = create_async_engine(
     settings.database_url,
     echo=settings.database_echo,
-    pool_size=settings.pool_size,
-    max_overflow=settings.max_overflow,
-    pool_timeout=settings.pool_timeout,
-    pool_recycle=settings.pool_recycle,
+    connect_args={"check_same_thread": False},  # 允许多线程访问
 )
 
 # 创建异步会话工厂
@@ -35,10 +32,12 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
             await session.close()
 
 
-'''
+"""
 函数正常结束 → 自动commit()
 抛出异常 → 自动rollback()
-'''
+"""
+
+
 @asynccontextmanager
 async def get_async_session_with_transaction() -> AsyncGenerator[AsyncSession, None]:
     """获取自动事务管理的异步数据库会话"""

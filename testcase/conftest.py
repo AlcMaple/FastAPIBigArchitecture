@@ -21,7 +21,6 @@ from app import app
 from db.database import depends_get_db_session, depends_get_db_session_with_transaction
 from config.settings import settings
 from utils.create_test_tables import create_tables_sync
-from utils.drop_test_tables import drop_tables_sync
 from testcase.manager import manager
 
 
@@ -31,7 +30,7 @@ def setup_and_teardown_test_tables():
 
     # 前置：创建测试数据库表
     if not create_tables_sync():
-        raise Exception(f"Failed to create {settings.test_db_type} test tables")
+        raise Exception("Failed to create SQLite test tables")
 
     # 导入基础数据
     print("开始导入测试基础数据...")
@@ -54,10 +53,6 @@ def setup_and_teardown_test_tables():
             print(f"  {script_name} 执行成功")
 
     yield  # 测试运行期间
-
-    # 后置：删除测试数据库表
-    if settings.test_db_type == "mysql":
-        drop_tables_sync()
 
 
 # 获取测试数据库管理器的引擎和会话

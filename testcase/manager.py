@@ -13,34 +13,22 @@ class TestDatabaseManager:
     """测试数据库管理器"""
 
     def __init__(self):
-        self.db_type = settings.test_db_type
-        self.database_url = settings.effective_test_database_url
+        self.database_url = settings.test_database_url
         self.engine = None
         self.session_factory = None
 
     def create_engine(self):
-        """根据数据库类型创建引擎"""
-        if self.db_type == "sqlite":
-            # SQLite 配置
-            self.engine = create_async_engine(
-                self.database_url,
-                echo=False,
-                # SQLite 内存数据库配置
-                poolclass=StaticPool,
-                connect_args={
-                    "check_same_thread": False,
-                },
-            )
-        else:
-            # MySQL 配置
-            self.engine = create_async_engine(
-                self.database_url,
-                echo=False,
-                pool_pre_ping=True,
-                pool_recycle=300,
-                pool_size=1,
-                max_overflow=0,
-            )
+        """创建 SQLite 测试数据库引擎"""
+        # SQLite 配置
+        self.engine = create_async_engine(
+            self.database_url,
+            echo=False,
+            # SQLite 内存数据库配置
+            poolclass=StaticPool,
+            connect_args={
+                "check_same_thread": False,
+            },
+        )
 
         # 创建会话工厂
         self.session_factory = sessionmaker(

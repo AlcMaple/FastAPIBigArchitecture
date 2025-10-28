@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-FastAPI-based medical appointment system using a layered architecture pattern. Built with async/await, SQLModel ORM, and MySQL database.
+FastAPI-based medical appointment system using a layered architecture pattern. Built with async/await, SQLModel ORM, and SQLite database.
 
 ## Common Commands
 
