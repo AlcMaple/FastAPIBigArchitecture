@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import List, Optional, Dict, Any
 from fastapi import UploadFile
-from utils.file import FileUtils
+from utils.file import FileUtils, FileCategory
 
 
 class DoctorRepository:
@@ -248,7 +248,7 @@ class DoctorRepository:
             raise ValueError("医生不存在")
 
         # 保存图片文件并获取相对路径
-        avatar_path = await FileUtils.save_damage_image(avatar_file)
+        avatar_path = await FileUtils.save_file(avatar_file, FileCategory.DOCTOR_AVATAR)
 
         # 模拟更新医生头像
         doctor["avatar"] = avatar_path
