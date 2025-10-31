@@ -11,7 +11,7 @@ from ..schemas.doctor import (
 from exts.logururoute.business_logger import logger
 from exts.exceptions.api_exception import ApiException
 from exts.exceptions.error_code import ErrorCode
-from utils.file import FileUtils
+from utils.file import FileUtils, FileCategory
 from utils.datetime import diff_days_for_now_time
 
 
@@ -145,7 +145,9 @@ class DoctorService:
 
         try:
             # 使用FileUtils保存头像文件
-            avatar_path = await FileUtils.save_damage_image(avatar_file)
+            avatar_path = await FileUtils.save_file(
+                avatar_file, FileCategory.DOCTOR_AVATAR
+            )
 
             # 更新医生头像路径
             update_data = {"avatar": avatar_path}
