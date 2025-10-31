@@ -5,7 +5,7 @@ from fastapi import UploadFile
 from ..repository.doctor import DoctorRepository
 from ..schemas.doctor import DoctorCreateRequest, DoctorUpdateRequest
 from exts.logururoute.business_logger import logger
-from utils.file import FileUtils
+from utils.file import FileUtils, FileCategory
 from exts.exceptions.api_exception import ApiException
 from exts.exceptions.error_code import ErrorCode
 
@@ -176,7 +176,7 @@ class DoctorService:
             raise ApiException(ErrorCode.NOT_FOUND, "医生信息不存在")
 
         # 使用FileUtil保存文件
-        file_path = await FileUtils.save_damage_image(file)
+        file_path = await FileUtils.save_file(file, FileCategory.DOCTOR_DOCUMENT)
 
         logger.info(f"医生 {doctor_id} 文档上传成功: {file_path}")
 
