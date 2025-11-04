@@ -3,34 +3,58 @@ from typing import Dict, List, Optional, Any
 from fastapi import UploadFile
 
 from ..repository.doctor import DoctorRepository
-from ..schemas.doctor import DoctorCreateRequest, DoctorUpdateRequest
+from ..schemas.doctor import (
+    DoctorCreateRequest,
+    DoctorUpdateRequest,
+    DoctorDetailResponse,
+    DoctorListItemResponse,
+    DoctorListResponse,
+    DoctorAvatarResponse,
+    FileUploadResponse,
+)
 from exts.logururoute.business_logger import logger
 from utils.file import FileUtils, FileCategory
 from exts.exceptions.api_exception import ApiException
 from exts.exceptions.error_code import ErrorCode
+from config.settings import settings
 
 
 class DoctorService:
     """医生业务服务层"""
 
     @staticmethod
-    async def get_doctor_list_infos(db_session: AsyncSession) -> Dict[str, Any]:
+    async def get_doctor_list_infos(
+        db_session: AsyncSession, page: int = 1, page_size: int = 10
+    ) -> DoctorListResponse:
         """
         获取可以预约的医生列表信息
 
         :param db_session: 数据库会话对象
-        :return: 医生列表信息
+        :param page: 页码
+        :param page_size: 每页数量
+        :return: DoctorListResponse Pydantic 对象
         """
         logger.info("开始获取可预约医生列表")
-        logger.warning("测试警告")
-        logger.error("测试错误")
-        logger.debug("测试调试")
-        logger.critical("测试严重")
 
+        # 获取可预约医生列表
         available_doctors = await DoctorRepository.get_available_doctors(db_session)
 
-        logger.info(f"获取可预约医生列表成功，共{len(available_doctors)}位医生")
-        return {"doctors": available_doctors, "total": len(available_doctors)}
+        doctor_items = []
+        for doctor_dict in available_doctors:
+            # 生成头像 URL
+            avatar_url = None
+            if doctor_dict.get("avatar"):
+                avatar_url = f"{settings.BASE_URL}/static/{doctor_dict['avatar']}"
+            doctor_dict["avatar_url"] = avatar_url
+            doctor_items.append(DoctorListItemResponse(**doctor_dict))
+
+        logger.info(f"获取可预约医生列表成功，共{len(doctor_items)}位医生")
+        return DoctorListResponse(
+            items=doctor_items,
+            total=len(doctor_items),
+            page=page,
+            page_size=page_size,
+        )
 
     @staticmethod
     async def get_all_doctors(db_session: AsyncSession) -> Dict[str, Any]:
@@ -47,15 +71,26 @@ class DoctorService:
     @staticmethod
     async def get_doctor_detail(
         db_session: AsyncSession, doctor_id: int
-    ) -> Optional[Dict[str, Any]]:
+    ) -> DoctorDetailResponse:
         """
         获取医生详细信息
 
         :param db_session: 数据库会话对象
         :param doctor_id: 医生ID
-        :return: 医生详细信息
+        :return: DoctorDetailResponse Pydantic 对象
+        :raises ApiException: 医生不存在
         """
-        return await DoctorRepository.get_doctor_by_id(db_session, doctor_id)
+        doctor_dict = await DoctorRepository.get_doctor_by_id(db_session, doctor_id)
+        if not doctor_dict:
+            raise ApiException(ErrorCode.NOT_FOUND, f"医生 {doctor_id} 不存在")
+
+        # 生成头像 URL
+        avatar_url = None
+        if doctor_dict.get("avatar"):
+            avatar_url = f"{settings.BASE_URL}/static/{doctor_dict['avatar']}"
+        doctor_dict["avatar_url"] = avatar_url
+
+        return DoctorDetailResponse(**doctor_dict)
 
     @staticmethod
     async def get_doctors_by_department(
@@ -77,61 +112,63 @@ class DoctorService:
     @staticmethod
     async def create_doctor(
         db_session: AsyncSession, doctor_request: DoctorCreateRequest
-    ) -> Dict[str, Any]:
+    ) -> DoctorDetailResponse:
         """
         创建医生
 
         :param db_session: 数据库会话对象
         :param doctor_request: 创建医生请求
-        :return: 创建的医生信息
+        :return: DoctorDetailResponse Pydantic 对象（与 get_doctor_detail 返回相同结构）
+        :raises ApiException: 业务验证失败
         """
-        # 转换为字典
-        doctor_data = doctor_request.dict()
-
-        # 业务逻辑验证
+        doctor_data = doctor_request.model_dump()
         if not doctor_data.get("name"):
             raise ApiException(ErrorCode.MISSING_PARAMETER, "医生姓名不能为空")
-
         if not doctor_data.get("department"):
             raise ApiException(ErrorCode.MISSING_PARAMETER, "科室不能为空")
+        new_doctor_dict = await DoctorRepository.create_doctor(db_session, doctor_data)
 
-        # 调用Repository层创建医生
-        new_doctor = await DoctorRepository.create_doctor(db_session, doctor_data)
+        # 生成头像 URL
+        new_doctor_dict["avatar_url"] = None  # 新创建的医生暂无头像
 
-        return new_doctor
+        return DoctorDetailResponse(**new_doctor_dict)
 
     @staticmethod
     async def update_doctor(
         db_session: AsyncSession, doctor_id: int, doctor_request: DoctorUpdateRequest
-    ) -> Dict[str, Any]:
+    ) -> DoctorDetailResponse:
         """
         更新医生信息
 
         :param db_session: 数据库会话对象
         :param doctor_id: 医生ID
         :param doctor_request: 更新医生请求
-        :return: 更新后的医生信息
+        :return: DoctorDetailResponse Pydantic 对象（与 get_doctor_detail 返回相同结构）
+        :raises ApiException: 医生不存在或更新失败
         """
         # 检查医生是否存在
         doctor = await DoctorRepository.get_doctor_by_id(db_session, doctor_id)
         if not doctor:
             raise ApiException(ErrorCode.NOT_FOUND, "医生信息不存在")
 
-        # 过滤掉None值
-        update_data = {k: v for k, v in doctor_request.dict().items() if v is not None}
-
+        update_data = {
+            k: v for k, v in doctor_request.model_dump().items() if v is not None
+        }
         if not update_data:
             raise ApiException(ErrorCode.PARAMETER_ERROR, "没有需要更新的数据")
-
-        # 调用Repository层更新医生
-        updated_doctor = await DoctorRepository.update_doctor(
+        updated_doctor_dict = await DoctorRepository.update_doctor(
             db_session, doctor_id, update_data
         )
-
-        if not updated_doctor:
+        if not updated_doctor_dict:
             raise ApiException(ErrorCode.BUSINESS_ERROR, "更新医生信息失败")
 
-        return updated_doctor
+        # 生成头像 URL
+        avatar_url = None
+        if updated_doctor_dict.get("avatar"):
+            avatar_url = f"{settings.BASE_URL}/static/{updated_doctor_dict['avatar']}"
+        updated_doctor_dict["avatar_url"] = avatar_url
+
+        return DoctorDetailResponse(**updated_doctor_dict)
 
     @staticmethod
     async def delete_doctor(db_session: AsyncSession, doctor_id: int) -> bool:
@@ -150,7 +187,6 @@ class DoctorService:
         # TODO: 这里可以添加业务逻辑检查
         # 例如：检查医生是否有未完成的预约等
 
-        # 调用Repository层删除医生
         success = await DoctorRepository.delete_doctor(db_session, doctor_id)
 
         if not success:
@@ -161,36 +197,42 @@ class DoctorService:
     @staticmethod
     async def upload_doctor_document(
         db_session: AsyncSession, doctor_id: int, file: UploadFile
-    ) -> Dict[str, Any]:
+    ) -> FileUploadResponse:
         """
         上传医生相关文档或图片（不保存到数据库）
 
         :param db_session: 数据库会话对象
         :param doctor_id: 医生ID
         :param file: 上传的文件
-        :return: 文件上传结果
+        :return: FileUploadResponse Pydantic 对象
+        :raises ApiException: 医生不存在
         """
         # 检查医生是否存在
         doctor = await DoctorRepository.get_doctor_by_id(db_session, doctor_id)
         if not doctor:
             raise ApiException(ErrorCode.NOT_FOUND, "医生信息不存在")
 
-        # 使用FileUtil保存文件
+        # 保存文件
         file_path = await FileUtils.save_file(file, FileCategory.DOCTOR_DOCUMENT)
 
         logger.info(f"医生 {doctor_id} 文档上传成功: {file_path}")
 
-        return {
-            "doctor_id": doctor_id,
-            "file_path": file_path,
-            "original_filename": file.filename,
-            "content_type": file.content_type,
-        }
+        # 获取文件大小
+        file.file.seek(0, 2)  # 移动到文件末尾
+        file_size = file.file.tell()
+        file.file.seek(0)  # 重置到文件开头
+
+        return FileUploadResponse(
+            file_name=file.filename or "unknown",
+            file_path=file_path,
+            file_url=f"{settings.BASE_URL}/static/{file_path}",
+            file_size=file_size,
+        )
 
     @staticmethod
     async def upload_doctor_avatar(
         db_session: AsyncSession, doctor_id: int, avatar_file: UploadFile
-    ) -> Dict[str, Any]:
+    ) -> DoctorAvatarResponse:
         """
         上传医生头像并保存到数据库
 
@@ -204,17 +246,25 @@ class DoctorService:
         :param db_session: 数据库会话对象
         :param doctor_id: 医生ID
         :param avatar_file: 上传的头像文件
-        :return: 头像上传结果
+        :return: DoctorAvatarResponse Pydantic 对象
+        :raises ApiException: 上传失败
         """
         try:
-            # 调用Repository层处理头像上传和数据库保存
-            result = await DoctorRepository.upload_doctor_avatar(
+            result_dict = await DoctorRepository.upload_doctor_avatar(
                 db_session, doctor_id, avatar_file
             )
+            logger.info(f"医生 {doctor_id} 头像上传成功: {result_dict['avatar']}")
 
-            logger.info(f"医生 {doctor_id} 头像上传成功: {result['avatar']}")
+            # 生成头像 URL
+            avatar_url = None
+            if result_dict.get("avatar"):
+                avatar_url = f"{settings.BASE_URL}/static/{result_dict['avatar']}"
 
-            return result
+            return DoctorAvatarResponse(
+                doctor_id=doctor_id,
+                avatar=result_dict.get("avatar"),
+                avatar_url=avatar_url,
+            )
 
         except ValueError as e:
             logger.error(f"医生 {doctor_id} 头像上传失败: {str(e)}")
@@ -226,13 +276,14 @@ class DoctorService:
     @staticmethod
     async def get_doctor_avatar(
         db_session: AsyncSession, doctor_id: int
-    ) -> Dict[str, Any]:
+    ) -> DoctorAvatarResponse:
         """
         获取医生头像信息
 
         :param db_session: 数据库会话对象
         :param doctor_id: 医生ID
-        :return: 头像信息
+        :return: DoctorAvatarResponse Pydantic 对象
+        :raises ApiException: 医生不存在
         """
         # 检查医生是否存在
         doctor = await DoctorRepository.get_doctor_by_id(db_session, doctor_id)
@@ -242,9 +293,13 @@ class DoctorService:
         # 获取头像路径
         avatar_path = await DoctorRepository.get_doctor_avatar(db_session, doctor_id)
 
-        return {
-            "doctor_id": doctor_id,
-            "doctor_name": doctor["name"],
-            "avatar": avatar_path,
-            "has_avatar": avatar_path is not None,
-        }
+        # 生成头像 URL
+        avatar_url = None
+        if avatar_path:
+            avatar_url = f"{settings.BASE_URL}/static/{avatar_path}"
+
+        return DoctorAvatarResponse(
+            doctor_id=doctor_id,
+            avatar=avatar_path,
+            avatar_url=avatar_url,
+        )

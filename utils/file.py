@@ -8,7 +8,7 @@
 要将此工具类移植到新项目（例如：电商、博客、ERP系统），请按以下步骤操作：
 
 1.  修改 FileCategory (文件类别枚举):
-    这是最重要的一步。删除或修改当前桥梁系统相关的类别 (如 DAMAGE_IMAGE, DESIGN_DOC 等)。
+    这是最重要的一步。删除或修改当前桥梁系统相关的类别 (如 OTHER, DESIGN_DOC 等)。
     添加您自己项目所需的业务类别。
 
     示例（用于一个电商项目）:
@@ -89,203 +89,25 @@ class FileTypeConfig:
 
 # 文件类型配置映射
 FILE_TYPE_CONFIGS: Dict[FileCategory, FileTypeConfig] = {
-    FileCategory.DAMAGE_IMAGE: FileTypeConfig(
-        allowed_mime_types=[
-            "image/jpeg",
-            "image/png",
-            "image/jpg",
-            "image/gif",
-            "image/webp",
-        ],
-        allowed_extensions=[".jpg", ".jpeg", ".png", ".gif", ".webp"],
-        max_size_mb=5,
-        upload_subdir="damage_images",
-        description="病害图片",
+    FileCategory.DOCTOR_DOCUMENT: FileTypeConfig(
+        allowed_mime_types=["application/pdf", "application/msword"],
+        allowed_extensions=[".pdf", ".doc", ".docx"],
+        max_size_mb=10,
+        upload_subdir="doctor_documents",
+        description="医生文档",
     ),
-    FileCategory.DESIGN_DOC: FileTypeConfig(
-        allowed_mime_types=[
-            "application/pdf",
-            "application/vnd.ms-excel",
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            "application/msword",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            "application/x-dwg",  # CAD 图纸
-            "image/vnd.dwg",
-            "application/acad",
-        ],
-        allowed_extensions=[".pdf", ".xls", ".xlsx", ".doc", ".docx", ".dwg", ".dxf"],
-        max_size_mb=50,
-        upload_subdir="design_docs",
-        description="设计图纸及文件",
-    ),
-    FileCategory.AS_BUILT_DOC: FileTypeConfig(
-        allowed_mime_types=[
-            "application/pdf",
-            "application/vnd.ms-excel",
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            "application/msword",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            "image/jpeg",
-            "image/png",
-            "image/jpg",
-        ],
-        allowed_extensions=[
-            ".pdf",
-            ".xls",
-            ".xlsx",
-            ".doc",
-            ".docx",
-            ".jpg",
-            ".jpeg",
-            ".png",
-        ],
-        max_size_mb=50,
-        upload_subdir="asbuilt_docs",
-        description="施工资料及竣工图",
-    ),
-    FileCategory.REGULAR_INSPECTION: FileTypeConfig(
-        allowed_mime_types=[
-            "application/pdf",
-            "application/vnd.ms-excel",
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            "application/msword",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            "image/jpeg",
-            "image/png",
-            "image/jpg",
-        ],
-        allowed_extensions=[
-            ".pdf",
-            ".xls",
-            ".xlsx",
-            ".doc",
-            ".docx",
-            ".jpg",
-            ".jpeg",
-            ".png",
-        ],
-        max_size_mb=20,
-        upload_subdir="regular_inspection",
-        description="经常检查资料",
-    ),
-    FileCategory.PERIODIC_INSPECTION: FileTypeConfig(
-        allowed_mime_types=[
-            "application/pdf",
-            "application/vnd.ms-excel",
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            "application/msword",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            "image/jpeg",
-            "image/png",
-            "image/jpg",
-        ],
-        allowed_extensions=[
-            ".pdf",
-            ".xls",
-            ".xlsx",
-            ".doc",
-            ".docx",
-            ".jpg",
-            ".jpeg",
-            ".png",
-        ],
-        max_size_mb=30,
-        upload_subdir="periodic_inspection",
-        description="定期检查资料",
-    ),
-    FileCategory.SPECIAL_INSPECTION: FileTypeConfig(
-        allowed_mime_types=[
-            "application/pdf",
-            "application/vnd.ms-excel",
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            "application/msword",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            "image/jpeg",
-            "image/png",
-            "image/jpg",
-            "video/mp4",
-            "video/avi",
-        ],
-        allowed_extensions=[
-            ".pdf",
-            ".xls",
-            ".xlsx",
-            ".doc",
-            ".docx",
-            ".jpg",
-            ".jpeg",
-            ".png",
-            ".mp4",
-            ".avi",
-        ],
-        max_size_mb=100,
-        upload_subdir="special_inspection",
-        description="特殊检测资料",
-    ),
-    FileCategory.MAINTENANCE: FileTypeConfig(
-        allowed_mime_types=[
-            "application/pdf",
-            "application/vnd.ms-excel",
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            "application/msword",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            "image/jpeg",
-            "image/png",
-            "image/jpg",
-        ],
-        allowed_extensions=[
-            ".pdf",
-            ".xls",
-            ".xlsx",
-            ".doc",
-            ".docx",
-            ".jpg",
-            ".jpeg",
-            ".png",
-        ],
-        max_size_mb=50,
-        upload_subdir="maintenance_docs",
-        description="维护、加固资料",
-    ),
-    FileCategory.SHM_DATA: FileTypeConfig(
-        allowed_mime_types=[
-            "application/pdf",
-            "application/vnd.ms-excel",
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            "text/csv",
-            "application/json",
-            "application/zip",
-        ],
-        allowed_extensions=[".pdf", ".xls", ".xlsx", ".csv", ".json", ".zip", ".dat"],
-        max_size_mb=200,
-        upload_subdir="shm_data",
-        description="结构健康监测资料",
+    FileCategory.DOCTOR_AVATAR: FileTypeConfig(
+        allowed_mime_types=["image/jpeg", "image/png", "image/webp"],
+        allowed_extensions=[".jpg", ".jpeg", ".png", ".webp"],
+        max_size_mb=2,
+        upload_subdir="doctor_avatars",
+        description="医生头像",
     ),
     FileCategory.OTHER: FileTypeConfig(
-        allowed_mime_types=[
-            "application/pdf",
-            "application/vnd.ms-excel",
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            "application/msword",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            "image/jpeg",
-            "image/png",
-            "image/jpg",
-            "text/plain",
-        ],
-        allowed_extensions=[
-            ".pdf",
-            ".xls",
-            ".xlsx",
-            ".doc",
-            ".docx",
-            ".jpg",
-            ".jpeg",
-            ".png",
-            ".txt",
-        ],
-        max_size_mb=30,
-        upload_subdir="other_docs",
+        allowed_mime_types=["*/*"],
+        allowed_extensions=["*"],
+        max_size_mb=10,
+        upload_subdir="others",
         description="其他资料",
     ),
 }
@@ -295,7 +117,7 @@ class FileUtils:
     BASE_UPLOAD_DIR = "static/uploads"
 
     @staticmethod
-    def get_upload_dir(file_category: FileCategory = FileCategory.DAMAGE_IMAGE) -> str:
+    def get_upload_dir(file_category: FileCategory = FileCategory.OTHER) -> str:
         """
         获取上传目录
 
