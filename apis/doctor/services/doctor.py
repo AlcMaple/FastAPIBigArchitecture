@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Any
+from typing import Optional
 from datetime import date
 from fastapi import UploadFile
 
@@ -7,6 +7,10 @@ from ..schemas.doctor import (
     DoctorCreateRequest,
     DoctorUpdateRequest,
     DoctorAvatarUploadResponse,
+    DoctorListResponse,
+    DoctorInfo,
+    DoctorDeleteResponse,
+    WorkExperienceResponse,
 )
 from exts.logururoute.business_logger import logger
 from exts.exceptions.api_exception import ApiException
@@ -19,7 +23,7 @@ class DoctorService:
     """医生业务服务层"""
 
     @staticmethod
-    async def get_all_doctors() -> Dict[str, Any]:
+    async def get_all_doctors() -> DoctorListResponse:
         """
         获取所有医生列表信息
 
@@ -34,10 +38,12 @@ class DoctorService:
             else:
                 doctor["work_days"] = None
 
-        return {"doctors": all_doctors, "total": len(all_doctors)}
+        return DoctorListResponse.model_validate(
+            {"doctors": all_doctors, "total": len(all_doctors)}
+        )
 
     @staticmethod
-    async def get_doctor_detail(doctor_id: int) -> Optional[Dict[str, Any]]:
+    async def get_doctor_detail(doctor_id: int) -> Optional[DoctorInfo]:
         """
         获取医生详细信息
 
@@ -48,10 +54,10 @@ class DoctorService:
         if doctor and doctor.get("hire_date"):
             doctor["work_days"] = diff_days_for_now_time(doctor["hire_date"]) * -1
 
-        return doctor
+        return DoctorInfo.model_validate(doctor)
 
     @staticmethod
-    async def create_doctor(doctor_request: DoctorCreateRequest) -> Dict[str, Any]:
+    async def create_doctor(doctor_request: DoctorCreateRequest) -> DoctorInfo:
         """
         创建医生
 
@@ -71,12 +77,20 @@ class DoctorService:
         # 调用Repository层创建医生
         new_doctor = await DoctorRepository.create_doctor(doctor_data)
 
-        return new_doctor
+        # 计算工作天数
+        if new_doctor.get("hire_date"):
+            new_doctor["work_days"] = (
+                diff_days_for_now_time(new_doctor["hire_date"]) * -1
+            )
+        else:
+            new_doctor["work_days"] = None
+
+        return DoctorInfo.model_validate(new_doctor)
 
     @staticmethod
     async def update_doctor(
         doctor_id: int, doctor_request: DoctorUpdateRequest
-    ) -> Dict[str, Any]:
+    ) -> DoctorInfo:
         """
         更新医生信息
 
@@ -101,15 +115,23 @@ class DoctorService:
         if not updated_doctor:
             raise ApiException(ErrorCode.BUSINESS_ERROR, "更新医生信息失败")
 
-        return updated_doctor
+        # 计算工作天数
+        if updated_doctor.get("hire_date"):
+            updated_doctor["work_days"] = (
+                diff_days_for_now_time(updated_doctor["hire_date"]) * -1
+            )
+        else:
+            updated_doctor["work_days"] = None
+
+        return DoctorInfo.model_validate(updated_doctor)
 
     @staticmethod
-    async def delete_doctor(doctor_id: int) -> bool:
+    async def delete_doctor(doctor_id: int) -> DoctorDeleteResponse:
         """
         删除医生
 
         :param doctor_id: 医生ID
-        :return: 是否删除成功
+        :return: 删除响应信息
         """
         # 检查医生是否存在
         doctor = await DoctorRepository.get_doctor_by_id(doctor_id)
@@ -125,12 +147,12 @@ class DoctorService:
         if not success:
             raise ApiException(ErrorCode.BUSINESS_ERROR, "删除医生失败")
 
-        return success
+        return DoctorDeleteResponse(deleted=success, doctor_id=doctor_id)
 
     @staticmethod
     async def upload_doctor_avatar(
         doctor_id: int, avatar_file: UploadFile
-    ) -> Dict[str, Any]:
+    ) -> DoctorAvatarUploadResponse:
         """
         上传医生头像
 
@@ -155,7 +177,9 @@ class DoctorService:
 
             logger.info(f"医生 {doctor_id} 头像上传成功: {avatar_path}")
 
-            return {"avatar_path": avatar_path, "message": "头像上传成功"}
+            return DoctorAvatarUploadResponse(
+                avatar_path=avatar_path, message="头像上传成功"
+            )
 
         except ApiException:
             # 如果是 ApiException，直接向上抛出
@@ -165,7 +189,7 @@ class DoctorService:
             raise ApiException(ErrorCode.BUSINESS_ERROR, f"头像上传失败: {str(e)}")
 
     @staticmethod
-    async def calculate_work_experience(hire_date: date) -> Dict[str, Any]:
+    async def calculate_work_experience(hire_date: date) -> WorkExperienceResponse:
         """
         计算医生工作经验
 
@@ -179,9 +203,9 @@ class DoctorService:
         work_years = work_days // 365
         remaining_days = work_days % 365
 
-        return {
-            "work_days": work_days,
-            "work_years": work_years,
-            "remaining_days": remaining_days,
-            "hire_date": hire_date.isoformat(),
-        }
+        return WorkExperienceResponse(
+            work_days=work_days,
+            work_years=work_years,
+            remaining_days=remaining_days,
+            hire_date=hire_date.isoformat(),
+        )

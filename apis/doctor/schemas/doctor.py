@@ -1,7 +1,6 @@
 from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List
-from datetime import datetime, date
-from fastapi import UploadFile
+from datetime import date
 
 
 class DoctorInfo(BaseModel):
@@ -53,3 +52,19 @@ class DoctorAvatarUploadResponse(BaseModel):
 
     avatar_path: str = Field(..., description="头像文件路径")
     message: str = Field(..., description="上传结果消息")
+
+
+class DoctorDeleteResponse(BaseModel):
+    """医生删除响应模型"""
+
+    deleted: bool = Field(..., description="是否删除成功")
+    doctor_id: int = Field(..., description="删除的医生ID")
+
+
+class WorkExperienceResponse(BaseModel):
+    """工作经验计算响应模型"""
+
+    work_days: int = Field(..., description="工作天数")
+    work_years: int = Field(..., description="工作年数")
+    remaining_days: int = Field(..., description="剩余天数")
+    hire_date: str = Field(..., description="入职日期")
