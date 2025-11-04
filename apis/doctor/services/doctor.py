@@ -1,9 +1,21 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Dict, List, Optional, Any
 from fastapi import UploadFile
 
 from ..repository.doctor import DoctorRepository
-from ..schemas.doctor import DoctorCreateRequest, DoctorUpdateRequest
+from ..schemas.doctor import (
+    DoctorCreateRequest,
+    DoctorUpdateRequest,
+    DoctorListResponse,
+    DoctorDetailResponse,
+    DoctorsByDepartmentResponse,
+    DoctorCreateResponse,
+    DoctorUpdateResponse,
+    DoctorDeleteResponse,
+    FileUploadResponse,
+    AvatarUploadResponse,
+    AvatarInfoResponse,
+    DoctorInfo,
+)
 from exts.logururoute.business_logger import logger
 from utils.file import FileUtils, FileCategory
 from exts.exceptions.api_exception import ApiException
@@ -14,7 +26,7 @@ class DoctorService:
     """医生业务服务层"""
 
     @staticmethod
-    async def get_doctor_list_infos(db_session: AsyncSession) -> Dict[str, Any]:
+    async def get_doctor_list_infos(db_session: AsyncSession) -> DoctorListResponse:
         """
         获取可以预约的医生列表信息
 
@@ -28,12 +40,13 @@ class DoctorService:
         logger.critical("测试严重")
 
         available_doctors = await DoctorRepository.get_available_doctors(db_session)
-
         logger.info(f"获取可预约医生列表成功，共{len(available_doctors)}位医生")
-        return {"doctors": available_doctors, "total": len(available_doctors)}
+        doctor_infos = [DoctorInfo(**doctor) for doctor in available_doctors]
+
+        return DoctorListResponse(doctors=doctor_infos, total=len(doctor_infos))
 
     @staticmethod
-    async def get_all_doctors(db_session: AsyncSession) -> Dict[str, Any]:
+    async def get_all_doctors(db_session: AsyncSession) -> DoctorListResponse:
         """
         获取所有医生列表信息
 
@@ -41,13 +54,13 @@ class DoctorService:
         :return: 所有医生列表信息
         """
         all_doctors = await DoctorRepository.get_all_doctors(db_session)
-
-        return {"doctors": all_doctors, "total": len(all_doctors)}
+        doctor_infos = [DoctorInfo(**doctor) for doctor in all_doctors]
+        return DoctorListResponse(doctors=doctor_infos, total=len(doctor_infos))
 
     @staticmethod
     async def get_doctor_detail(
         db_session: AsyncSession, doctor_id: int
-    ) -> Optional[Dict[str, Any]]:
+    ) -> DoctorDetailResponse:
         """
         获取医生详细信息
 
@@ -55,12 +68,18 @@ class DoctorService:
         :param doctor_id: 医生ID
         :return: 医生详细信息
         """
-        return await DoctorRepository.get_doctor_by_id(db_session, doctor_id)
+        doctor = await DoctorRepository.get_doctor_by_id(db_session, doctor_id)
+
+        # 如果医生不存在，抛出异常
+        if not doctor:
+            raise ApiException(ErrorCode.NOT_FOUND, "医生信息不存在")
+
+        return DoctorDetailResponse(**doctor)
 
     @staticmethod
     async def get_doctors_by_department(
         db_session: AsyncSession, department: str
-    ) -> Dict[str, Any]:
+    ) -> DoctorsByDepartmentResponse:
         """
         根据科室获取医生列表
 
@@ -71,13 +90,15 @@ class DoctorService:
         doctors = await DoctorRepository.get_doctors_by_department(
             db_session, department
         )
-
-        return {"doctors": doctors, "department": department, "total": len(doctors)}
+        doctor_infos = [DoctorInfo(**doctor) for doctor in doctors]
+        return DoctorsByDepartmentResponse(
+            doctors=doctor_infos, department=department, total=len(doctor_infos)
+        )
 
     @staticmethod
     async def create_doctor(
         db_session: AsyncSession, doctor_request: DoctorCreateRequest
-    ) -> Dict[str, Any]:
+    ) -> DoctorCreateResponse:
         """
         创建医生
 
@@ -95,15 +116,13 @@ class DoctorService:
         if not doctor_data.get("department"):
             raise ApiException(ErrorCode.MISSING_PARAMETER, "科室不能为空")
 
-        # 调用Repository层创建医生
         new_doctor = await DoctorRepository.create_doctor(db_session, doctor_data)
-
-        return new_doctor
+        return DoctorCreateResponse(**new_doctor)
 
     @staticmethod
     async def update_doctor(
         db_session: AsyncSession, doctor_id: int, doctor_request: DoctorUpdateRequest
-    ) -> Dict[str, Any]:
+    ) -> DoctorUpdateResponse:
         """
         更新医生信息
 
@@ -122,25 +141,23 @@ class DoctorService:
 
         if not update_data:
             raise ApiException(ErrorCode.PARAMETER_ERROR, "没有需要更新的数据")
-
-        # 调用Repository层更新医生
         updated_doctor = await DoctorRepository.update_doctor(
             db_session, doctor_id, update_data
         )
-
         if not updated_doctor:
             raise ApiException(ErrorCode.BUSINESS_ERROR, "更新医生信息失败")
-
-        return updated_doctor
+        return DoctorUpdateResponse(**updated_doctor)
 
     @staticmethod
-    async def delete_doctor(db_session: AsyncSession, doctor_id: int) -> bool:
+    async def delete_doctor(
+        db_session: AsyncSession, doctor_id: int
+    ) -> DoctorDeleteResponse:
         """
         删除医生
 
         :param db_session: 数据库会话对象
         :param doctor_id: 医生ID
-        :return: 是否删除成功
+        :return: 删除结果
         """
         # 检查医生是否存在
         doctor = await DoctorRepository.get_doctor_by_id(db_session, doctor_id)
@@ -150,18 +167,15 @@ class DoctorService:
         # TODO: 这里可以添加业务逻辑检查
         # 例如：检查医生是否有未完成的预约等
 
-        # 调用Repository层删除医生
         success = await DoctorRepository.delete_doctor(db_session, doctor_id)
-
         if not success:
             raise ApiException(ErrorCode.BUSINESS_ERROR, "删除医生失败")
-
-        return success
+        return DoctorDeleteResponse(success=success, doctor_id=doctor_id)
 
     @staticmethod
     async def upload_doctor_document(
         db_session: AsyncSession, doctor_id: int, file: UploadFile
-    ) -> Dict[str, Any]:
+    ) -> FileUploadResponse:
         """
         上传医生相关文档或图片（不保存到数据库）
 
@@ -175,22 +189,21 @@ class DoctorService:
         if not doctor:
             raise ApiException(ErrorCode.NOT_FOUND, "医生信息不存在")
 
-        # 使用FileUtil保存文件
+        # 保存文件
         file_path = await FileUtils.save_file(file, FileCategory.DOCTOR_DOCUMENT)
 
         logger.info(f"医生 {doctor_id} 文档上传成功: {file_path}")
-
-        return {
-            "doctor_id": doctor_id,
-            "file_path": file_path,
-            "original_filename": file.filename,
-            "content_type": file.content_type,
-        }
+        return FileUploadResponse(
+            doctor_id=doctor_id,
+            file_path=file_path,
+            original_filename=file.filename,
+            content_type=file.content_type,
+        )
 
     @staticmethod
     async def upload_doctor_avatar(
         db_session: AsyncSession, doctor_id: int, avatar_file: UploadFile
-    ) -> Dict[str, Any]:
+    ) -> AvatarUploadResponse:
         """
         上传医生头像并保存到数据库
 
@@ -207,18 +220,14 @@ class DoctorService:
         :return: 头像上传结果
         """
         try:
-            # 调用Repository层处理头像上传和数据库保存
             result = await DoctorRepository.upload_doctor_avatar(
                 db_session, doctor_id, avatar_file
             )
-
             logger.info(f"医生 {doctor_id} 头像上传成功: {result['avatar']}")
-
-            return result
-
+            return AvatarUploadResponse(**result)
         except ValueError as e:
             logger.error(f"医生 {doctor_id} 头像上传失败: {str(e)}")
-            raise e
+            raise ApiException(ErrorCode.PARAMETER_ERROR, str(e))
         except Exception as e:
             logger.error(f"医生 {doctor_id} 头像上传出现未知错误: {str(e)}")
             raise ApiException(ErrorCode.BUSINESS_ERROR, "头像上传失败，请稍后重试")
@@ -226,7 +235,7 @@ class DoctorService:
     @staticmethod
     async def get_doctor_avatar(
         db_session: AsyncSession, doctor_id: int
-    ) -> Dict[str, Any]:
+    ) -> AvatarInfoResponse:
         """
         获取医生头像信息
 
@@ -242,9 +251,9 @@ class DoctorService:
         # 获取头像路径
         avatar_path = await DoctorRepository.get_doctor_avatar(db_session, doctor_id)
 
-        return {
-            "doctor_id": doctor_id,
-            "doctor_name": doctor["name"],
-            "avatar": avatar_path,
-            "has_avatar": avatar_path is not None,
-        }
+        return AvatarInfoResponse(
+            doctor_id=doctor_id,
+            doctor_name=doctor["name"],
+            avatar=avatar_path,
+            has_avatar=avatar_path is not None,
+        )

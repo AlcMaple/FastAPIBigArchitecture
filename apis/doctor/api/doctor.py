@@ -16,8 +16,8 @@ async def get_doctor_list(db_session: AsyncSession = Depends(depends_get_db_sess
     :param db_session: 数据库连接依赖注入对象
     :return: 返回可以预约的医生列表信息
     """
-    info = await DoctorService.get_doctor_list_infos(db_session)
-    return Success(data=info)
+    result = await DoctorService.get_doctor_list_infos(db_session)
+    return Success(data=result.model_dump())
 
 
 @router_doctor.post(
@@ -36,8 +36,8 @@ async def upload_doctor_document(
     :param db_session: 数据库连接依赖注入对象
     :return: 上传结果和文件路径
     """
-    data = await DoctorService.upload_doctor_document(db_session, doctor_id, file)
-    return Success(data=data, message="文件上传成功")
+    result = await DoctorService.upload_doctor_document(db_session, doctor_id, file)
+    return Success(data=result.model_dump(), message="文件上传成功")
 
 
 @router_doctor.post("/doctor/{doctor_id}/upload-avatar", summary="上传医生头像")
@@ -61,8 +61,8 @@ async def upload_doctor_avatar(
     :param db_session: 数据库连接依赖注入对象
     :return: 头像上传结果
     """
-    data = await DoctorService.upload_doctor_avatar(db_session, doctor_id, avatar)
-    return Success(data=data, message="头像上传成功")
+    result = await DoctorService.upload_doctor_avatar(db_session, doctor_id, avatar)
+    return Success(data=result.model_dump(), message="头像上传成功")
 
 
 @router_doctor.get("/doctor/{doctor_id}/avatar", summary="获取医生头像信息")
@@ -77,5 +77,5 @@ async def get_doctor_avatar(
     :param db_session: 数据库连接依赖注入对象
     :return: 医生头像信息
     """
-    data = await DoctorService.get_doctor_avatar(db_session, doctor_id)
-    return Success(data=data)
+    result = await DoctorService.get_doctor_avatar(db_session, doctor_id)
+    return Success(data=result.model_dump())
