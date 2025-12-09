@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     # 应用配置
     app_name: str = "FastAPIBigArchitecture"
     debug: bool = True
+    base_url: str = "http://localhost:8000"  # 应用基础URL，用于生成完整的文件访问路径
 
     # 数据库配置
     database_url: str = "mysql+aiomysql://root:password@localhost:3306/arch_db"

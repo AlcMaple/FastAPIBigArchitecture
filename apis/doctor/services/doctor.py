@@ -44,7 +44,7 @@ class DoctorService:
             # 生成头像 URL
             avatar_url = None
             if doctor_dict.get("avatar"):
-                avatar_url = f"{settings.BASE_URL}/static/{doctor_dict['avatar']}"
+                avatar_url = f"{settings.base_url}/static/{doctor_dict['avatar']}"
             doctor_dict["avatar_url"] = avatar_url
             doctor_items.append(DoctorListItemResponse(**doctor_dict))
 
@@ -87,7 +87,7 @@ class DoctorService:
         # 生成头像 URL
         avatar_url = None
         if doctor_dict.get("avatar"):
-            avatar_url = f"{settings.BASE_URL}/static/{doctor_dict['avatar']}"
+            avatar_url = f"{settings.base_url}/static/{doctor_dict['avatar']}"
         doctor_dict["avatar_url"] = avatar_url
 
         return DoctorDetailResponse(**doctor_dict)
@@ -165,7 +165,7 @@ class DoctorService:
         # 生成头像 URL
         avatar_url = None
         if updated_doctor_dict.get("avatar"):
-            avatar_url = f"{settings.BASE_URL}/static/{updated_doctor_dict['avatar']}"
+            avatar_url = f"{settings.base_url}/static/{updated_doctor_dict['avatar']}"
         updated_doctor_dict["avatar_url"] = avatar_url
 
         return DoctorDetailResponse(**updated_doctor_dict)
@@ -199,7 +199,7 @@ class DoctorService:
         db_session: AsyncSession, doctor_id: int, file: UploadFile
     ) -> FileUploadResponse:
         """
-        上传医生相关文档或图片（不保存到数据库）
+        上传医生相关文档（不保存到数据库）
 
         :param db_session: 数据库会话对象
         :param doctor_id: 医生ID
@@ -212,20 +212,20 @@ class DoctorService:
         if not doctor:
             raise ApiException(ErrorCode.NOT_FOUND, "医生信息不存在")
 
-        # 保存文件
-        file_path = await FileUtils.save_file(file, FileCategory.DOCTOR_DOCUMENT)
-
-        logger.info(f"医生 {doctor_id} 文档上传成功: {file_path}")
-
         # 获取文件大小
         file.file.seek(0, 2)  # 移动到文件末尾
         file_size = file.file.tell()
         file.file.seek(0)  # 重置到文件开头
 
+        # 保存文件
+        file_path = await FileUtils.save_file(file, FileCategory.DOCTOR_DOCUMENT)
+
+        logger.info(f"医生 {doctor_id} 文档上传成功: {file_path}")
+
         return FileUploadResponse(
             file_name=file.filename or "unknown",
             file_path=file_path,
-            file_url=f"{settings.BASE_URL}/static/{file_path}",
+            file_url=f"{settings.base_url}/static/{file_path}",
             file_size=file_size,
         )
 
@@ -258,7 +258,7 @@ class DoctorService:
             # 生成头像 URL
             avatar_url = None
             if result_dict.get("avatar"):
-                avatar_url = f"{settings.BASE_URL}/static/{result_dict['avatar']}"
+                avatar_url = f"{settings.base_url}/static/{result_dict['avatar']}"
 
             return DoctorAvatarResponse(
                 doctor_id=doctor_id,
@@ -296,7 +296,7 @@ class DoctorService:
         # 生成头像 URL
         avatar_url = None
         if avatar_path:
-            avatar_url = f"{settings.BASE_URL}/static/{avatar_path}"
+            avatar_url = f"{settings.base_url}/static/{avatar_path}"
 
         return DoctorAvatarResponse(
             doctor_id=doctor_id,

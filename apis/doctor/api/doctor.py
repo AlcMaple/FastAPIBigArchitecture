@@ -48,7 +48,7 @@ async def upload_doctor_document(
     db_session: AsyncSession = Depends(depends_get_db_session),
 ):
     """
-    上传医生相关文档或图片（不保存到数据库）
+    上传医生相关文档（不保存到数据库）
 
     :param doctor_id: 医生ID
     :param file: 上传的文件

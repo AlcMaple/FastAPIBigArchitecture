@@ -2,6 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import List, Optional, Dict, Any
 from fastapi import UploadFile
+from datetime import datetime
 from utils.file import FileUtils, FileCategory
 
 
@@ -26,6 +27,13 @@ class DoctorRepository:
                 "title": "主任医师",
                 "specialty": "心血管疾病",
                 "available": True,
+                "phone": "13800138001",
+                "email": "zhang@hospital.com",
+                "years_experience": 15,
+                "introduction": "擅长心血管疾病的诊断和治疗",
+                "avatar": None,
+                "created_at": datetime.now(),
+                "updated_at": datetime.now(),
             },
             {
                 "id": 2,
@@ -34,6 +42,13 @@ class DoctorRepository:
                 "title": "副主任医师",
                 "specialty": "骨科手术",
                 "available": True,
+                "phone": "13800138002",
+                "email": "li@hospital.com",
+                "years_experience": 12,
+                "introduction": "擅长骨科手术和创伤治疗",
+                "avatar": None,
+                "created_at": datetime.now(),
+                "updated_at": datetime.now(),
             },
             {
                 "id": 3,
@@ -42,6 +57,13 @@ class DoctorRepository:
                 "title": "主治医师",
                 "specialty": "儿童常见病",
                 "available": False,
+                "phone": "13800138003",
+                "email": "wang@hospital.com",
+                "years_experience": 8,
+                "introduction": "擅长儿童常见病和多发病的诊治",
+                "avatar": None,
+                "created_at": datetime.now(),
+                "updated_at": datetime.now(),
             },
             {
                 "id": 4,
@@ -50,6 +72,13 @@ class DoctorRepository:
                 "title": "副主任医师",
                 "specialty": "妇科内分泌",
                 "available": True,
+                "phone": "13800138004",
+                "email": "chen@hospital.com",
+                "years_experience": 10,
+                "introduction": "擅长妇科内分泌疾病的诊治",
+                "avatar": None,
+                "created_at": datetime.now(),
+                "updated_at": datetime.now(),
             },
         ]
         return doctors_data
@@ -79,6 +108,13 @@ class DoctorRepository:
                 "title": "主任医师",
                 "specialty": "心血管疾病",
                 "available": True,
+                "phone": "13800138001",
+                "email": "zhang@hospital.com",
+                "years_experience": 15,
+                "introduction": "擅长心血管疾病的诊断和治疗",
+                "avatar": None,
+                "created_at": datetime.now(),
+                "updated_at": datetime.now(),
             },
             2: {
                 "id": 2,
@@ -87,6 +123,13 @@ class DoctorRepository:
                 "title": "副主任医师",
                 "specialty": "骨科手术",
                 "available": True,
+                "phone": "13800138002",
+                "email": "li@hospital.com",
+                "years_experience": 12,
+                "introduction": "擅长骨科手术和创伤治疗",
+                "avatar": None,
+                "created_at": datetime.now(),
+                "updated_at": datetime.now(),
             },
             3: {
                 "id": 3,
@@ -95,6 +138,13 @@ class DoctorRepository:
                 "title": "主治医师",
                 "specialty": "儿童常见病",
                 "available": False,
+                "phone": "13800138003",
+                "email": "wang@hospital.com",
+                "years_experience": 8,
+                "introduction": "擅长儿童常见病和多发病的诊治",
+                "avatar": None,
+                "created_at": datetime.now(),
+                "updated_at": datetime.now(),
             },
             4: {
                 "id": 4,
@@ -103,6 +153,13 @@ class DoctorRepository:
                 "title": "副主任医师",
                 "specialty": "妇科内分泌",
                 "available": True,
+                "phone": "13800138004",
+                "email": "chen@hospital.com",
+                "years_experience": 10,
+                "introduction": "擅长妇科内分泌疾病的诊治",
+                "avatar": None,
+                "created_at": datetime.now(),
+                "updated_at": datetime.now(),
             },
         }
 
@@ -148,11 +205,14 @@ class DoctorRepository:
         # new_doctor = Doctor(**doctor_data)
         # db_session.add(new_doctor)
         # await db_session.flush()
+        # return new_doctor.model_dump()
 
         # 模拟创建医生
         new_id = 100 + hash(str(doctor_data)) % 900
         doctor_data["id"] = new_id
         doctor_data["available"] = True
+        doctor_data["created_at"] = datetime.now()
+        doctor_data["updated_at"] = datetime.now()
 
         return doctor_data
 
