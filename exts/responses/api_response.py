@@ -9,13 +9,17 @@ import decimal
 from typing import Any, Optional
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.declarative import DeclarativeMeta
+from pydantic import BaseModel
 
 
 class CustomJSONEncoder(json.JSONEncoder):
     """自定义 JSON 编码器"""
 
     def default(self, obj):
-        if hasattr(obj, "keys") and hasattr(obj, "__getitem__"):
+        # Handle Pydantic models
+        if isinstance(obj, BaseModel):
+            return obj.model_dump()
+        elif hasattr(obj, "keys") and hasattr(obj, "__getitem__"):
             return dict(obj)
         elif isinstance(obj, datetime.datetime):
             return obj.strftime("%Y-%m-%d %H:%M:%S")
