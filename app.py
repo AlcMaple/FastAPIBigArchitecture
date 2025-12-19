@@ -18,7 +18,7 @@ from exts.logururoute.business_logger import logger
 from app_factory import get_app_factory
 
 # 导入模块路由
-from apis import router_doctor_module
+from apis import router_simple_module
 
 
 @asynccontextmanager
@@ -28,11 +28,11 @@ async def lifespan(app: FastAPI):
     # 启动时的初始化代码
     logger.info("启动 fastapi arch")
 
-    # 初始化数据库表
-    try:
-        await init_database()
-    except Exception as e:
-        logger.error(f"数据库初始化失败: {e}")
+    # # 初始化数据库表
+    # try:
+    #     await init_database()
+    # except Exception as e:
+    #     logger.error(f"数据库初始化失败: {e}")
 
     yield
 
@@ -50,7 +50,7 @@ def setup_applications():
     # 注册模块
     # 每个模块会生成独立的子应用，可通过 /{module_name}/docs 访问
     # doctor 模块包含：医生信息路由分组 + 预约管理路由分组
-    factory.register_module("doctor", router_doctor_module, "医疗服务模块")
+    factory.register_module("simple", router_simple_module, "简单服务模块")
 
     # 如果有其他模块（如 hospital），也在这里注册：
     # factory.register_module("hospital", router_hospital_module, "医院管理模块")

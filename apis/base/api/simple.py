@@ -9,3 +9,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.database import depends_get_db_session, depends_get_db_session_with_transaction
 from exts.responses.api_response import Success
+from . import router_simple
+from ..schemas.simple import DesignUnitCreateRequest
+from ..services.simple import SimpleService
+
+
+@router_simple.post("/design_unit", summary="创建设计单位")
+async def create_design_unit(
+    request: DesignUnitCreateRequest,
+    db_session: AsyncSession = Depends(depends_get_db_session_with_transaction),
+):
+    result = await SimpleService.create_unit(db_session, request)
+    return Success(result, message="创建设计单位成功")
