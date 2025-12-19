@@ -4,6 +4,7 @@
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
+from fastapi.encoders import jsonable_encoder
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError, DBAPIError
 
@@ -131,8 +132,10 @@ class GlobalExceptionHandler:
         logger.error(f"[ValidationError] {request.method} {request.url}")
         logger.error(f"  Errors: {exc.errors()}")
 
-        # 提取第一个错误信息作为主要提示
+        # 获取原始错误列表
         errors = exc.errors()
+
+        # 提取第一个错误信息作为主要提示
         if errors:
             first_error = errors[0]
             field = " -> ".join(str(loc) for loc in first_error["loc"][1:])
@@ -140,10 +143,24 @@ class GlobalExceptionHandler:
         else:
             message = "参数校验失败"
 
+        cleaned_errors = []
+        for error in errors:
+            cleaned_error = {
+                "type": error.get("type"),
+                "loc": error.get("loc"),
+                "msg": error.get("msg"),
+            }
+            if "url" in error:
+                cleaned_error["url"] = error["url"]
+            cleaned_errors.append(cleaned_error)
+
+        # 可序列化错误数据
+        serializable_errors = jsonable_encoder(cleaned_errors)
+
         return Error(
             code=ErrorCode.PARAMETER_ERROR.code,
             message=message,
-            data={"errors": errors, "body": exc.body} if errors else None,
+            data={"errors": serializable_errors} if serializable_errors else None,
             http_status=422,
         )
 
