@@ -5,6 +5,7 @@
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError, DBAPIError
 
 from .api_exception import ApiException
 from .error_code import ErrorCode
@@ -25,12 +26,20 @@ class GlobalExceptionHandler:
 
         处理优先级（从高到低）：
         1. ApiException - 业务异常（开发者主动抛出）
-        2. RequestValidationError - Pydantic 参数校验异常
-        3. StarletteHTTPException - HTTP 异常
-        4. Exception - 所有未捕获的异常
+        2. IntegrityError - 数据库完整性错误（唯一键、外键冲突等）
+        3. SQLAlchemyError - 数据库操作错误
+        4. RequestValidationError - Pydantic 参数校验异常
+        5. StarletteHTTPException - HTTP 异常
+        6. Exception - 所有未捕获的异常
         """
         # 业务异常（最高优先级）
         app.add_exception_handler(ApiException, self.handle_api_exception)
+
+        # 数据库完整性异常（唯一键、外键冲突等）
+        app.add_exception_handler(IntegrityError, self.handle_integrity_error)
+
+        # 数据库操作异常
+        app.add_exception_handler(SQLAlchemyError, self.handle_database_error)
 
         # 参数校验异常
         app.add_exception_handler(RequestValidationError, self.handle_validation_error)
@@ -55,6 +64,62 @@ class GlobalExceptionHandler:
             code=exc.code,
             message=exc.message,
             data=exc.data,
+        )
+
+    async def handle_integrity_error(self, request: Request, exc: IntegrityError):
+        """
+        处理数据库完整性错误（唯一键冲突、外键约束等）
+        """
+        logger.error(f"[IntegrityError] {request.method} {request.url}")
+        logger.error(f"  Error: {str(exc)}")
+
+        error_msg = str(exc.orig) if hasattr(exc, "orig") else str(exc)
+
+        # 判断具体的完整性错误类型
+        if "duplicate" in error_msg.lower() or "unique" in error_msg.lower():
+            # 唯一键冲突
+            return Error(
+                code=ErrorCode.DUPLICATE_KEY_ERROR.code,
+                message="数据重复，违反唯一性约束",
+                data={"detail": error_msg} if error_msg else None,
+            )
+        elif "foreign key" in error_msg.lower():
+            # 外键约束错误
+            return Error(
+                code=ErrorCode.FOREIGN_KEY_ERROR.code,
+                message="外键约束错误，关联数据不存在或被引用",
+                data={"detail": error_msg} if error_msg else None,
+            )
+        else:
+            # 其他完整性错误
+            return Error(
+                code=ErrorCode.DATABASE_ERROR.code,
+                message="数据库完整性约束错误",
+                data={"detail": error_msg} if error_msg else None,
+            )
+
+    async def handle_database_error(self, request: Request, exc: SQLAlchemyError):
+        """
+        处理数据库操作错误（连接失败、SQL 语法错误等）
+        """
+        logger.error(f"[DatabaseError] {request.method} {request.url}")
+        logger.error(f"  Error Type: {type(exc).__name__}")
+        logger.error(f"  Error: {str(exc)}")
+
+        error_msg = str(exc.orig) if hasattr(exc, "orig") else str(exc)
+
+        # 判断是否为连接错误
+        if isinstance(exc, DBAPIError) and "connect" in error_msg.lower():
+            return Error(
+                code=ErrorCode.DATABASE_CONNECTION_ERROR.code,
+                message="数据库连接失败，请稍后重试",
+            )
+
+        # 其他数据库错误
+        return Error(
+            code=ErrorCode.DATABASE_ERROR.code,
+            message="数据库操作异常",
+            data={"error_type": type(exc).__name__} if error_msg else None,
         )
 
     async def handle_validation_error(
