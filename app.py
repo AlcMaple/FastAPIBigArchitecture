@@ -5,11 +5,6 @@ from fastapi.staticfiles import StaticFiles
 # 导入配置
 from config.settings import settings
 
-# 日志配置
-from exts.logururoute.config import setup_loggers
-
-setup_loggers("./")
-
 from db.init_db import init_database
 from db.database import async_engine
 from exts.logururoute.business_logger import logger
