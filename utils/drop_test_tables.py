@@ -13,7 +13,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 from sqlmodel import SQLModel
 from config.settings import settings
 from db.models import *
-from testcase.manager import manager
+from tests.manager import manager
 
 
 async def drop_test_tables():

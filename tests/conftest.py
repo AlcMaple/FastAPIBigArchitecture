@@ -22,7 +22,7 @@ from db.database import depends_get_db_session, depends_get_db_session_with_tran
 from config.settings import settings
 from utils.create_test_tables import create_tables_sync
 from utils.drop_test_tables import drop_tables_sync
-from testcase.manager import manager
+from tests.manager import manager
 
 
 @pytest.fixture(scope="session", autouse=True)
