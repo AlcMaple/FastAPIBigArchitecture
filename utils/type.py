@@ -1,99 +1,124 @@
 """
 @File: type.py
 @Description: 通用参数类型校验工具模块
-
-基于 Pydantic V2，利用 Annotated 定义自带校验规则的类型。
-在 Schema 中只需要声明类型，校验自动生效。
-
-使用方式:
-    from utils.type import NameStr, PhoneStr, ContactStr
-    from pydantic import BaseModel, Field
-
-    class DesignUnitCreateRequest(BaseModel):
-        name: NameStr
-        tel: Optional[PhoneStr] = None
-        contact: Optional[ContactStr] = None
 """
 
-from typing import Annotated, Optional
-from pydantic import StringConstraints, BeforeValidator, Field
+from typing import Annotated
+from pydantic import BeforeValidator, Field
 import re
+
+
+# ============== 通用辅助函数 ==============
+
+
+def validate_str_length(v: str, name: str, max_len: int, min_len: int = 1) -> str:
+    """
+    通用字符串长度校验
+    :param v: 输入值
+    :param name: 字段名称（用于报错提示）
+    :param max_len: 最大长度
+    :param min_len: 最小长度
+    """
+    if v is None:
+        raise ValueError(f"{name}不能为空")
+
+    v = str(v).strip()
+
+    if len(v) < min_len:
+        raise ValueError(f"{name}长度不能少于{min_len}个字符")
+
+    if len(v) > max_len:
+        raise ValueError(f"{name}长度不能超过{max_len}个字符")
+
+    return v
 
 
 # ============== 字符串长度校验类型 ==============
 
+
+def validate_name(v: str) -> str:
+    return validate_str_length(v, "名称", max_len=20)
+
+
+def validate_address(v: str) -> str:
+    return validate_str_length(v, "地址", max_len=200)
+
+
 # 名称类型
 NameStr = Annotated[
     str,
-    StringConstraints(min_length=1, max_length=20, strip_whitespace=True),
-    Field(description="名称"),
+    BeforeValidator(validate_name),
+    Field(description="名称", examples=["广东建筑设计院"]),
 ]
 
 # 地址类型
 AddressStr = Annotated[
     str,
-    StringConstraints(min_length=1, max_length=200, strip_whitespace=True),
-    Field(description="地址"),
+    BeforeValidator(validate_address),
+    Field(description="地址", examples=["广州市天河区科韵路88号"]),
 ]
 
 
 # ============== 电话号码校验 ==============
 
-# 中国大陆手机号
+# 正则表达式常量
 MOBILE_PHONE_PATTERN = r"^1[3-9]\d{9}$"
-
-# 固定电话（区号-号码，支持带分机号）
-# 格式：010-12345678、0571-87654321、010-12345678-1234
 LANDLINE_PHONE_PATTERN = r"^0\d{2,3}-?\d{7,8}(-\d{1,6})?$"
-
-# 通用电话（支持手机号、固话、400/800电话等）
 GENERAL_PHONE_PATTERN = (
     r"^(1[3-9]\d{9}|0\d{2,3}-?\d{7,8}(-\d{1,6})?|400-?\d{7}|800-?\d{7})$"
 )
 
 
-def validate_phone(v: str) -> str:
-    """
-    验证电话号码格式
+def validate_mobile(v: str) -> str:
+    """验证纯手机号"""
+    v = str(v).strip()
+    if not v:
+        raise ValueError("手机号不能为空")
 
-    支持格式：
-    - 手机号：13812345678
-    - 固话：010-12345678、0571-87654321
-    - 带分机：010-12345678-1234
-    - 400/800：400-1234567、800-1234567
-    """
-    v = v.strip()
-    if not re.match(GENERAL_PHONE_PATTERN, v):
-        raise ValueError("电话号码格式不正确，请输入有效的手机号或固定电话")
+    if not re.match(MOBILE_PHONE_PATTERN, v):
+        raise ValueError("手机号格式不正确，请输入有效的11位中国大陆手机号码")
     return v
 
 
-# 电话号码类型
-PhoneStr = Annotated[
-    str,
-    BeforeValidator(validate_phone),
-    Field(description="电话号码"),
-]
+def validate_general_phone(v: str) -> str:
+    """验证通用电话（手机/座机/400）"""
+    v = str(v).strip()
+    if not v:
+        raise ValueError("电话号码不能为空")
+
+    if not re.match(GENERAL_PHONE_PATTERN, v):
+        raise ValueError("电话号码格式不正确，支持手机号、座机(带区号)或400热线")
+    return v
+
 
 # 手机号类型
 MobilePhoneStr = Annotated[
     str,
-    StringConstraints(pattern=MOBILE_PHONE_PATTERN, strip_whitespace=True),
-    Field(description="手机号"),
+    BeforeValidator(validate_mobile),
+    Field(description="手机号", pattern=MOBILE_PHONE_PATTERN, examples=["13800138000"]),
+]
+
+# 通用电话类型
+PhoneStr = Annotated[
+    str,
+    BeforeValidator(validate_general_phone),
+    Field(description="电话号码", examples=["020-88888888", "13800138000"]),
 ]
 
 
 # ============== 邮箱校验 ==============
 
-# 邮箱
 EMAIL_PATTERN = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
 
 
 def validate_email(v: str) -> str:
     """验证邮箱格式并转换为小写"""
-    v = v.strip().lower()
+    v = str(v).strip().lower()
+    if not v:
+        raise ValueError("邮箱地址不能为空")
+
     if not re.match(EMAIL_PATTERN, v):
-        raise ValueError("邮箱格式不正确，请输入有效的邮箱地址")
+        raise ValueError("邮箱格式不正确，请输入有效的邮箱地址(如: example@domain.com)")
     return v
 
 
@@ -101,5 +126,5 @@ def validate_email(v: str) -> str:
 EmailStr = Annotated[
     str,
     BeforeValidator(validate_email),
-    Field(description="邮箱地址"),
+    Field(description="邮箱地址", examples=["contact@example.com"]),
 ]
