@@ -4,231 +4,231 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-FastAPI-based medical appointment system using a layered architecture pattern. Built with async/await, SQLModel ORM, and MySQL database.
+FastAPI-based web framework using a layered architecture pattern. This is a Chinese-language medical appointment system (doctor/hospital/patient) that serves as a template for building FastAPI applications with clean architecture.
 
-## Common Commands
+## Development Commands
 
-### Development
 ```bash
-# Start development server
+# Install dependencies
+pip install -r requirements.txt
+
+# Start development server (with auto-reload)
 python main.py
+# App runs at http://localhost:8000
+# API docs at http://localhost:8000/docs
 
 # Run all tests
 pytest
 
 # Run specific test file
-pytest testcase/test_sync_api.py
+pytest tests/integration/api/test_design_unit.py
 
-# Run tests with verbose output
+# Run specific test function
+pytest tests/integration/api/test_design_unit.py::test_create_design_unit_success
+
+# Run with verbose output
 pytest -v
+
+# Run tests matching pattern
+pytest -k "test_create"
 ```
-
-### Database Setup
-```bash
-# Create production database
-CREATE DATABASE arch_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
-# Create test database (if using MySQL for tests)
-CREATE DATABASE arch_test_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
-# Configure environment
-cp .env.example .env
-# Then edit .env with database credentials
-```
-
-### Access Points
-- API Documentation: http://localhost:8000/docs
-- Alternative Docs: http://localhost:8000/redoc
-- Static Files: http://localhost:8000/static/
 
 ## Architecture
 
-### Layered Architecture (5 Layers)
+### Five-Layer Pattern
 
-Each feature module follows this structure:
+Every functional module follows this structure:
 
 ```
 apis/{module_name}/
-├── api/           # API layer - HTTP request/response handling
-├── services/      # Business logic layer - core domain logic
-├── repository/    # Data access layer - database operations
-├── schemas/       # Data model layer - Pydantic request/response models
-└── dependencies/  # Dependency injection - shared dependencies
+├── api/          # API layer - routes, request/response handling
+├── services/     # Business logic layer - core business rules
+├── repository/   # Data access layer - database operations
+├── schemas/      # Data models - Pydantic request/response models
+└── dependencies/ # Dependency injection (optional)
 ```
 
-**Layer Flow**: API → Service → Repository → Database
+**Data Flow**: `API → Service → Repository → Database`
 
-**Key Principle**: Each layer only depends on the layer directly below it.
+### Key Directories
 
-### Database Session Management
+- **apis/**: Feature modules (each with full 5-layer structure)
+- **db/**: Database configuration, models (SQLModel), initialization
+- **exts/**: Global extensions (exceptions, responses, logging, request context)
+- **middlewares/**: Request/response middleware (logger middleware)
+- **plugins/**: Custom plugins and third-party integrations
+- **config/**: Pydantic-based settings with `.env` support
+- **tests/**: Integration and unit tests
+- **utils/**: Utility functions and helper scripts
 
-Two session types in [db/database.py](db/database.py):
+### Application Factory Pattern
 
-1. **`depends_get_db_session()`** - For read operations (SELECT queries)
-   - No automatic commit
-   - Use in GET endpoints
+The app uses a factory pattern ([app_factory.py](app_factory.py)) that:
+1. Registers modules with `app_factory.register_module(name, router, description)`
+2. Creates main app and module sub-apps via `create_all_apps(lifespan)`
+3. Mounts sub-apps at `/{module_name}` for modular API documentation
 
-2. **`depends_get_db_session_with_transaction()`** - For write operations (INSERT/UPDATE/DELETE)
-   - Auto-commit on success
-   - Auto-rollback on exception
-   - Use in POST/PUT/DELETE endpoints
-   - **Critical**: One request = one transaction. All database operations in a request must complete before commit.
+Each module gets its own Swagger docs at `http://localhost:8000/{module_name}/docs`
 
-Example:
+## Database
+
+### Configuration
+
+- ORM: SQLModel (built on SQLAlchemy 2.0)
+- Async driver: aiomysql for MySQL, aiosqlite for tests
+- Connection pooling configured in [config/settings.py](config/settings.py)
+- Two dependency injection functions:
+  - `depends_get_db_session`: Basic session
+  - `depends_get_db_session_with_transaction`: Auto-commit/rollback on success/error
+
+### Database Models
+
+Defined in [db/models.py](db/models.py) using SQLModel (combines Pydantic + SQLAlchemy).
+
+## Response Format
+
+All API responses use standardized format from [exts/responses/api_response.py](exts/responses/api_response.py):
+
 ```python
-# Read operation
-@router.get("/doctors")
-async def get_doctors(db: AsyncSession = Depends(depends_get_db_session)):
-    return await DoctorService.get_all_doctors(db)
+# Success response
+return Success(data=result, message="操作成功")
 
-# Write operation
-@router.post("/doctor")
-async def create_doctor(
-    data: DoctorCreateRequest,
-    db: AsyncSession = Depends(depends_get_db_session_with_transaction)
-):
-    return await DoctorService.create_doctor(db, data)
-```
-
-### Response Format
-
-All API responses use standardized format from [exts/responses/json_response.py](exts/responses/json_response.py):
-
-- **Success**: `Success(result={...}, message="...")` - Status 200, code 200
-- **Fail**: `Fail(message="...")` - Status 200, code 1000+
-
-Response structure:
-```json
+# Returns:
 {
   "success": true,
   "code": 200,
-  "message": "获取成功",
-  "result": {...},
-  "timestamp": 1234567890
+  "message": "操作成功",
+  "data": {...},
+  "timestamp": 1678886400000
 }
 ```
 
-### Exception Handling
+**Custom JSON encoder** handles datetime, Decimal, Pydantic models, SQLAlchemy models automatically.
 
-Global exception handler in [exts/exceptions/handlers.py](exts/exceptions/handlers.py):
+## Exception Handling
 
-- **BusinessError**: Custom business logic errors (use `ExceptionEnum`)
-- **ValueError**: Automatically caught and converted to `Fail` response
-- **RequestValidationError**: Parameter validation errors
-- **Other exceptions**: Logged and return appropriate error responses
+Use `ApiException` from [exts/exceptions/api_exception.py](exts/exceptions/api_exception.py):
 
-Error code ranges:
-- 200: Success
-- 1000-1999: Parameter validation errors
-- 2000-2999: User authentication/permission errors
-- 3000-3999: Business logic errors
-- 4000-4999: External service errors
-- 5000-5999: Internal server errors
+```python
+from exts.exceptions.api_exception import ApiException
+from exts.exceptions.error_code import ErrorCode
 
-### Logging
+# Raise with default message
+raise ApiException(ErrorCode.NOT_FOUND)
 
-Configured via [exts/logururoute/](exts/logururoute/):
-- Business logger: `from exts.logururoute.business_logger import logger`
-- Logs stored in [log/](log/) directory
-- Logger middleware (commented out in [app.py](app.py)) can track all requests
+# Custom message
+raise ApiException(ErrorCode.NOT_FOUND, "医生不存在")
 
-## Database Models
+# With additional data
+raise ApiException(ErrorCode.VALIDATION_ERROR, "数据验证失败", data={"field": "phone"})
+```
 
-Core entities in [db/models.py](db/models.py):
-
-- **Doctor**: Medical staff information
-- **Schedule**: Doctor scheduling (date, time slots, capacity)
-- **Patient**: Patient records
-- **Appointment**: Booking records linking doctors, patients, and schedules
-- **Hospital**, **Department**, **MedicalRecord**: Supporting entities
-
-Relationships:
-- Doctor → Schedules (one-to-many)
-- Doctor → Appointments (one-to-many)
-- Patient → Appointments (one-to-many)
-- Schedule → Appointments (one-to-many)
+Global exception handler (`GlobalExceptionHandler`) automatically converts exceptions to proper API responses.
 
 ## Testing
 
-Test configuration in [testcase/conftest.py](testcase/conftest.py):
+### Test Structure
 
-- Tests use isolated database (SQLite in-memory by default, configurable to MySQL)
-- Database recreated for each test session
-- Test files must start with `test_` or end with `_test.py`
-- Place test files in [testcase/](testcase/) directory
+```
+tests/
+├── conftest.py              # Global fixtures (event loop)
+├── factories.py             # Polyfactory model factories
+├── integration/
+│   ├── conftest.py         # Integration test fixtures (db_session, client)
+│   ├── api/                # API endpoint tests
+│   └── repositories/       # Repository layer tests
+└── unit/
+    ├── conftest.py         # Unit test fixtures
+    ├── services/           # Service layer tests
+    └── utils/              # Utility tests
+```
 
-Test database configuration in `.env`:
-- `TEST_DB_TYPE=sqlite` (default) or `mysql`
-- `SQLITE_TEST_DATABASE_URL=sqlite+aiosqlite:///:memory:`
-- `TEST_DATABASE_URL=mysql+aiomysql://...` (for MySQL tests)
+### Test Database
 
-## File Upload Handling
+- Uses SQLite in-memory by default (`sqlite+aiosqlite:///:memory:`)
+- Configurable via `settings.test_db_type` in [config/settings.py](config/settings.py)
+- Each test function gets fresh database (auto create/drop tables)
 
-File utilities in [utils/file.py](utils/file.py):
+### Test Fixtures (Integration)
 
-- `FileUtils.save_damage_image()`: Save uploaded files to [static/uploads/damage_images/](static/uploads/damage_images/)
-- Files saved with UUID-based names to prevent conflicts
-- Update database avatar field when uploading doctor avatars
+- `db_session`: Async database session with auto create/drop tables
+- `client`: AsyncClient with dependency overrides for testing
+- `clean_db`: Clears database data while preserving schema
+
+### Test Factories
+
+Uses Polyfactory with custom async persistence ([tests/factories.py](tests/factories.py)):
+
+```python
+# Create test data
+user = await UserFactory.create_async(session=db_session, name="张三")
+```
+
+### Test Utilities
+
+[tests/integration/api/utils.py](tests/integration/api/utils.py) provides:
+- `assert_api_success(response)`: Validates success response, returns data
+- `assert_api_failure(response, expected_code, match_msg, status_code)`: Validates error response
+
+### Parametrized Tests
+
+Use `@pytest.mark.parametrize` for testing multiple scenarios:
+
+```python
+@pytest.mark.parametrize(
+    "field, bad_value, expected_msg",
+    [
+        ("email", "not-an-email", "邮箱格式"),
+        ("tel", "123", "手机号格式"),
+    ],
+)
+@pytest.mark.asyncio
+async def test_validation(client, field, bad_value, expected_msg):
+    ...
+```
+
+## Adding New Modules
+
+1. Create module directory: `apis/{module_name}/`
+2. Add subdirectories: `api/`, `services/`, `repository/`, `schemas/`
+3. Define routes in `api/` with APIRouter
+4. Register in [apis/__init__.py](apis/__init__.py):
+   ```python
+   from .{module_name}.api import router_{module_name}
+   router_{module_name}_module = APIRouter()
+   router_{module_name}_module.include_router(router_{module_name})
+   ```
+5. Register in [app.py](app.py):
+   ```python
+   factory.register_module("{module_name}", router_{module_name}_module, "模块描述")
+   ```
+
+## Code Style
+
+- **Type hints required**: All function signatures use Python type annotations
+- **Async/await**: All I/O operations are async
+- **Dependency injection**: Use FastAPI's `Depends()` for database sessions
+- **Chinese comments/messages**: Business logic comments and user-facing messages in Chinese
+- **Table naming**: Singular nouns (e.g., `user`, not `users`)
 
 ## Configuration
 
-Settings in [config/settings.py](config/settings.py):
+Environment variables loaded from `.env` file (see `.env.example`):
+- `DATABASE_URL`: MySQL connection string
+- `TEST_DATABASE_URL`: Test database connection (if using MySQL for tests)
+- Application settings in [config/settings.py](config/settings.py) using Pydantic Settings
 
-- Uses Pydantic Settings for type-safe configuration
-- Loads from `.env` file
-- Database connection pool configuration (pool_size, max_overflow, pool_recycle, pool_timeout)
-- Access via `from config.settings import settings`
+## Logging
 
-## Key Design Patterns
+Uses Loguru ([exts/logururoute/](exts/logururoute/)):
+- Structured logging with business logger
+- Optional request/response logging middleware (commented in [app.py](app.py))
+- Logs stored in `logs/` directory
 
-1. **Dependency Injection**: Use FastAPI's `Depends()` for database sessions and other dependencies
-2. **Async/Await**: All database operations and route handlers are async
-3. **Repository Pattern**: Database operations isolated in repository layer
-4. **Service Layer**: Business logic separated from API endpoints
-5. **Schema Validation**: Pydantic models for request/response validation
+## Important Patterns
 
-## Adding New Features
-
-To add a new module:
-
-1. Create module directory under [apis/](apis/):
-   ```
-   apis/new_module/
-   ├── api/          # Route definitions
-   ├── services/     # Business logic
-   ├── repository/   # Database operations
-   ├── schemas/      # Pydantic models
-   └── __init__.py
-   ```
-
-2. Define routers in `api/__init__.py`:
-   ```python
-   from fastapi import APIRouter
-   router_new_module = APIRouter(prefix="/new_module", tags=["New Module"])
-   ```
-
-3. Register router in [apis/__init__.py](apis/__init__.py) and [app.py](app.py):
-   ```python
-   from apis import router_new_module
-   app.include_router(router_new_module)
-   ```
-
-4. Add database models to [db/models.py](db/models.py) if needed
-5. Follow the existing layer structure and naming conventions
-
-## Project Structure Notes
-
-- **[exts/](exts/)**: Global extensions (logging, responses, exceptions, request context)
-- **[plugins/](plugins/)**: Custom plugins and third-party integrations
-- **[middlewares/](middlewares/)**: Request/response middleware
-- **[static/](static/)**: Static files (CSS, JS, uploaded files)
-- **[wiki/](wiki/)**: Project documentation
-- Root directory can contain custom modules (e.g., third-party SDK integrations)
-
-## Important Conventions
-
-- Use singular nouns for database table names (e.g., `doctor`, not `doctors`)
-- All async functions should use `async`/`await` syntax
-- Repository methods return dictionaries or lists of dictionaries (not ORM objects)
-- Service layer validates business rules before calling repository
-- API layer handles HTTP concerns only (validation, serialization)
+1. **Session Management**: Always use dependency injection for database sessions
+2. **Transaction Handling**: Use `depends_get_db_session_with_transaction` for write operations
+3. **Error Responses**: Raise `ApiException` rather than returning error responses
+4. **Schema Validation**: Use Pydantic models for request/response validation
+5. **Factory Pattern**: Test data creation via Polyfactory factories, not manual model instantiation
