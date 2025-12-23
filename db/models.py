@@ -2,12 +2,25 @@ from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional, List
 from datetime import datetime
 from enum import Enum
+from sqlalchemy import func
 
 
 class BaseModel(SQLModel):
     id: Optional[int] = Field(default=None, primary_key=True)
-    created_at: datetime = Field(default_factory=datetime.now, description="创建时间")
-    updated_at: datetime = Field(default_factory=datetime.now, description="更新时间")
+    created_at: Optional[datetime] = Field(
+        default=None,
+        description="创建时间",
+        sa_column_kwargs={"server_default": func.now()},  # 数据库插入时自动填入时间
+    )
+
+    updated_at: Optional[datetime] = Field(
+        default=None,
+        description="更新时间",
+        sa_column_kwargs={
+            "server_default": func.now(),  # 数据库插入时自动填入
+            "onupdate": func.now(),  # 数据库更新时自动刷新
+        },
+    )
 
 
 # ====================================================
