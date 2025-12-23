@@ -1,4 +1,4 @@
-from typing import TypeVar, Generic
+from typing import TypeVar, Generic, Any, Set
 from polyfactory.factories.sqlalchemy_factory import SQLAlchemyFactory
 from polyfactory.persistence import AsyncPersistenceProtocol
 from polyfactory import Use
@@ -59,6 +59,16 @@ class BaseFactory(SQLAlchemyFactory[T], Generic[T]):
         # 保存并返回
         return await persistence.save(data)
 
+    @classmethod
+    def build_payload(cls, exclude_fields: Set[str] = None, **kwargs) -> dict[str, Any]:
+        """
+        构建请求体
+        """
+        # 排除默认字段
+        default_exclude_fields = {"id", "created_at", "updated_at"}
+        final_exclude = default_exclude_fields | (exclude_fields or set())
+        return cls.build(**kwargs).model_dump(exclude=final_exclude)
+
 
 # =============================================================================
 # 业务逻辑配置
@@ -79,6 +89,7 @@ class UserFactory(BaseFactory[User]):
 class DesignUnitFactory(BaseFactory[DesignUnit]):
     __model__ = DesignUnit
 
+    name = Use(fake.company)
     contact = Use(fake.name)
     tel = Use(fake.phone_number)
     email = Use(fake.email)

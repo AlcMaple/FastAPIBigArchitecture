@@ -11,13 +11,7 @@ async def test_create_design_unit_success(client: AsyncClient):
     """
     测试场景：正常创建设计单位
     """
-    payload = {
-        "name": "广东建筑设计院",
-        "tel": "13800138000",
-        "email": "contact@gdarch.com",
-        "address": "广州市天河区",
-        "contact": "张工",
-    }
+    payload = DesignUnitFactory.build_payload()
     response = await client.post("/api/design_unit", json=payload)
     result = assert_api_success(response)
     assert result["name"] == payload["name"]
@@ -33,13 +27,9 @@ async def test_create_design_unit_duplicate_name(
     """
     测试场景：名称重复 (Error Code: 4041)
     """
-    await DesignUnitFactory.create_async(session=db_session, name="广东建筑设计院")
-
-    payload = {
-        "name": "广东建筑设计院",  # 冲突点
-        "tel": "13900000000",
-    }
-
+    conflict_name = "恒大地产设计院"
+    await DesignUnitFactory.create_async(session=db_session, name=conflict_name)
+    payload = DesignUnitFactory.build_payload(name=conflict_name)
     response = await client.post("/api/design_unit", json=payload)
     assert_api_failure(
         response, expected_code=4041, match_msg="已存在", status_code=200
@@ -61,11 +51,7 @@ async def test_create_design_unit_validation_errors(
     """
     测试场景：Pydantic 字段校验失败 (HTTP 422)
     """
-    payload = {
-        "name": "标准设计院",
-        "tel": "13800138000",
-        "email": "test@test.com",
-    }
+    payload = DesignUnitFactory.build_payload()
     payload[field] = bad_value
     response = await client.post("/api/design_unit", json=payload)
     assert_api_failure(response, status_code=422, match_msg=expected_msg)
