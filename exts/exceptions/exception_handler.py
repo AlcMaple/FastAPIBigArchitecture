@@ -53,18 +53,17 @@ class GlobalExceptionHandler:
 
     async def handle_api_exception(self, request: Request, exc: ApiException):
         """
-        处理业务异常（ApiException）,抛出的异常，直接转换为 Error 响应
+        处理业务异常（ApiException）
         """
-        logger.error(f"[ApiException] {request.method} {request.url}")
-        logger.error(f"  Error Code: {exc.code}")
-        logger.error(f"  Message: {exc.message}")
-        if exc.data:
-            logger.error(f"  Data: {exc.data}")
+        logger.warning(f"[BizError] {request.method} {request.url} ")
+        logger.warning(f"  Error Code: {exc.code} ")
+        logger.warning(f"  Message: {exc.message} ")
 
         return Error(
             code=exc.code,
             message=exc.message,
             data=exc.data,
+            http_status=exc.http_status,
         )
 
     async def handle_integrity_error(self, request: Request, exc: IntegrityError):
@@ -75,29 +74,24 @@ class GlobalExceptionHandler:
         logger.error(f"  Error: {str(exc)}")
 
         error_msg = str(exc.orig) if hasattr(exc, "orig") else str(exc)
+        error_lower = error_msg.lower()
+
+        # 默认错误
+        target_error = ErrorCode.DATABASE_ERROR
 
         # 判断具体的完整性错误类型
-        if "duplicate" in error_msg.lower() or "unique" in error_msg.lower():
-            # 唯一键冲突
-            return Error(
-                code=ErrorCode.DUPLICATE_KEY_ERROR.code,
-                message="数据重复，违反唯一性约束",
-                data={"detail": error_msg} if error_msg else None,
-            )
-        elif "foreign key" in error_msg.lower():
-            # 外键约束错误
-            return Error(
-                code=ErrorCode.FOREIGN_KEY_ERROR.code,
-                message="外键约束错误，关联数据不存在或被引用",
-                data={"detail": error_msg} if error_msg else None,
-            )
-        else:
-            # 其他完整性错误
-            return Error(
-                code=ErrorCode.DATABASE_ERROR.code,
-                message="数据库完整性约束错误",
-                data={"detail": error_msg} if error_msg else None,
-            )
+        if "duplicate" in error_lower or "unique" in error_lower:
+            target_error = ErrorCode.DUPLICATE_KEY_ERROR
+        elif "foreign key" in error_lower:
+            target_error = ErrorCode.FOREIGN_KEY_ERROR
+
+        return Error(
+            code=target_error.code,
+            message=target_error.message,
+            # 在开发环境返回详细信息，生产环境去掉 detail_msg
+            data={"detail": error_msg} if error_msg else None,
+            http_status=target_error.http_status,
+        )
 
     async def handle_database_error(self, request: Request, exc: SQLAlchemyError):
         """
@@ -107,20 +101,19 @@ class GlobalExceptionHandler:
         logger.error(f"  Error Type: {type(exc).__name__}")
         logger.error(f"  Error: {str(exc)}")
 
-        error_msg = str(exc.orig) if hasattr(exc, "orig") else str(exc)
+        target_error = ErrorCode.DATABASE_ERROR
 
         # 判断是否为连接错误
-        if isinstance(exc, DBAPIError) and "connect" in error_msg.lower():
-            return Error(
-                code=ErrorCode.DATABASE_CONNECTION_ERROR.code,
-                message="数据库连接失败，请稍后重试",
-            )
+        error_str = str(exc).lower()
+        if isinstance(exc, DBAPIError) and (
+            "connect" in error_str or "connection" in error_str
+        ):
+            target_error = ErrorCode.DATABASE_CONNECTION_ERROR
 
-        # 其他数据库错误
         return Error(
-            code=ErrorCode.DATABASE_ERROR.code,
-            message="数据库操作异常",
-            data={"error_type": type(exc).__name__} if error_msg else None,
+            code=target_error.code,
+            message=target_error.message,
+            http_status=target_error.http_status,
         )
 
     async def handle_validation_error(
@@ -129,39 +122,38 @@ class GlobalExceptionHandler:
         """
         处理 Pydantic 参数校验异常
         """
-        logger.error(f"[ValidationError] {request.method} {request.url}")
-        logger.error(f"  Errors: {exc.errors()}")
+        logger.warning(f"[ParamError] {request.method} {request.url}")
+        logger.warning(f"  Errors: {exc.errors()}")
 
         # 获取原始错误列表
         errors = exc.errors()
+        target_error = ErrorCode.VALIDATION_ERROR
+        message = target_error.message
 
-        # 提取第一个错误信息作为主要提示
+        # 错误提示
         if errors:
             first_error = errors[0]
-            field = " -> ".join(str(loc) for loc in first_error["loc"][1:])
-            message = f"参数 '{field}' {first_error['msg']}"
-        else:
-            message = "参数校验失败"
+            loc_parts = [
+                str(x)
+                for x in first_error.get("loc", [])
+                if x not in ("body", "query", "path")
+            ]
+            field_name = ".".join(loc_parts)
+            msg = first_error.get("msg", "")
 
-        cleaned_errors = []
-        for error in errors:
-            cleaned_error = {
-                "type": error.get("type"),
-                "loc": error.get("loc"),
-                "msg": error.get("msg"),
-            }
-            if "url" in error:
-                cleaned_error["url"] = error["url"]
-            cleaned_errors.append(cleaned_error)
+            if field_name:
+                message = f"参数 '{field_name}' {msg}"
+            else:
+                message = msg
 
         # 可序列化错误数据
-        serializable_errors = jsonable_encoder(cleaned_errors)
+        serializable_errors = jsonable_encoder(errors)
 
         return Error(
             code=ErrorCode.PARAMETER_ERROR.code,
             message=message,
-            data={"errors": serializable_errors} if serializable_errors else None,
-            http_status=422,
+            data={"errors": serializable_errors},
+            http_status=ErrorCode.PARAMETER_ERROR.http_status,
         )
 
     async def handle_http_exception(
