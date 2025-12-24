@@ -4,7 +4,8 @@
 """
 
 from typing import Annotated
-from pydantic import BeforeValidator, Field
+from pydantic import BeforeValidator, Field, TypeAdapter, ValidationError
+from pydantic import EmailStr as PydanticEmailStr
 import re
 
 
@@ -108,17 +109,18 @@ PhoneStr = Annotated[
 
 # ============== 邮箱校验 ==============
 
-EMAIL_PATTERN = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+_email_adapter = TypeAdapter(PydanticEmailStr)
 
 
 def validate_email(v: str) -> str:
-    """验证邮箱格式并转换为小写"""
     v = str(v).strip().lower()
     if not v:
         raise ValueError("邮箱地址不能为空")
+    try:
+        _email_adapter.validate_python(v)
+    except ValidationError:
+        raise ValueError("邮箱格式不正确，请输入有效的邮箱地址")
 
-    if not re.match(EMAIL_PATTERN, v):
-        raise ValueError("邮箱格式不正确，请输入有效的邮箱地址(如: example@domain.com)")
     return v
 
 
