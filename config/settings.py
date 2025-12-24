@@ -28,6 +28,13 @@ class Settings(BaseSettings):
     pool_recycle: int = 3600
     pool_timeout: int = 30
 
+    # JWT 配置
+    secret_key: str = (
+        "your-secret-key-change-in-production-please-use-a-strong-random-string"
+    )
+    algorithm: str = "HS256"
+    access_token_expire_minutes: int = 90
+
     # 测试数据导入脚本配置（按执行顺序）
     test_data_import_scripts: list[str] = [
         # "utils/import_bridge_base_data.py",

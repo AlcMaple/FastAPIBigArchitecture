@@ -32,7 +32,6 @@ class User(BaseModel, table=True):
     __tablename__ = "user"
 
     name: str = Field(max_length=10, description="用户名")
-    password: str = Field(description="密码")
     password_hash: str = Field(description="密码哈希")
 
 

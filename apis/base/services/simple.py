@@ -33,7 +33,7 @@ class SimpleService:
     ) -> DesignUnitResponse:
         unit_orm = await SimpleRepository.get_unit_by_id(db_session, unit_id)
         if not unit_orm:
-            raise ApiException(ErrorCode.NOT_FOUND, "设计单元不存在")
+            raise ApiException(ErrorCode.NOT_FOUND)
         return DesignUnitResponse.model_validate(unit_orm)
 
     @staticmethod
@@ -53,12 +53,12 @@ class SimpleService:
             db_session, unit_id, unit_update_request.model_dump()
         )
         if not unit_orm:
-            raise ApiException(ErrorCode.NOT_FOUND, "设计单元不存在")
+            raise ApiException(ErrorCode.NOT_FOUND)
         return DesignUnitResponse.model_validate(unit_orm)
 
     @staticmethod
     async def delete_unit(db_session: AsyncSession, unit_id: int) -> bool:
         result = await SimpleRepository.delete_unit(db_session, unit_id)
         if not result:
-            raise ApiException(ErrorCode.NOT_FOUND, "设计单元不存在")
+            raise ApiException(ErrorCode.NOT_FOUND)
         return True
