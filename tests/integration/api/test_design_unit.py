@@ -6,6 +6,7 @@ from datetime import datetime
 
 from tests.factories import DesignUnitFactory
 from tests.integration.api.utils import assert_api_success, assert_api_failure
+from exts.exceptions.error_code import ErrorCode
 
 
 @pytest.mark.asyncio
@@ -34,7 +35,7 @@ async def test_create_design_unit_duplicate_name(
     payload = DesignUnitFactory.build_payload(name=conflict_name)
     response = await client.post("/api/design_unit", json=payload)
     assert_api_failure(
-        response, expected_code=4041, match_msg="已存在", status_code=200
+        response, expected_error=ErrorCode.RESOURCE_ALREADY_EXISTS, match_msg="已存在"
     )
 
 
@@ -51,12 +52,14 @@ async def test_create_design_unit_validation_errors(
     client: AsyncClient, field, bad_value, expected_msg
 ):
     """
-    测试场景：Pydantic 字段校验失败 (HTTP 422)
+    测试场景：Pydantic 字段校验失败 (HTTP 400)
     """
     payload = DesignUnitFactory.build_payload()
     payload[field] = bad_value
     response = await client.post("/api/design_unit", json=payload)
-    assert_api_failure(response, status_code=422, match_msg=expected_msg)
+    assert_api_failure(
+        response, expected_error=ErrorCode.PARAMETER_ERROR, match_msg=expected_msg
+    )
 
 
 @pytest.mark.asyncio
