@@ -39,17 +39,7 @@ cp .env.example .env
 DATABASE_URL=mysql+aiomysql://用户名:密码@localhost:3306/arch_db
 ```
 
-4. 如果需要测试的话，还需要创建测试数据库：
-
-```sql
-CREATE DATABASE arch_test_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
-
-5. 修改 `.env` 文件中的测试数据库连接信息：
-
-```bash
-TEST_DATABASE_URL=mysql+aiomysql://用户名:密码@localhost:3306/arch_test_db
-```
+> 注意：测试环境统一使用 SQLite 内存数据库，无需额外配置。
 
 ### 启动应用
 
@@ -113,12 +103,9 @@ FastAPIBigArchitecture/
 │   │   ├── test_datetime.py
 │   │   └── test_file.py
 │   ├── conftest.py
-│   ├── factories.py
-│   └── manager.py
+│   └── factories.py
 ├── utils
-│   ├── create_test_tables.py
 │   ├── datetime.py
-│   ├── drop_test_tables.py
 │   └── file.py
 ├── wiki
 │   ├── Database.md

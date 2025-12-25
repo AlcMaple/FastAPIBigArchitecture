@@ -145,9 +145,10 @@ tests/
 
 ### Test Database
 
-- Uses SQLite in-memory by default (`sqlite+aiosqlite:///:memory:`)
-- Configurable via `settings.test_db_type` in [config/settings.py](config/settings.py)
+- Uses SQLite in-memory database (`sqlite+aiosqlite:///:memory:`)
+- No configuration needed - works out of the box
 - Each test function gets fresh database (auto create/drop tables)
+- Fast, isolated, and automatically cleaned up
 
 ### Test Fixtures (Integration)
 
@@ -215,7 +216,7 @@ async def test_validation(client, field, bad_value, expected_msg):
 
 Environment variables loaded from `.env` file (see `.env.example`):
 - `DATABASE_URL`: MySQL connection string
-- `TEST_DATABASE_URL`: Test database connection (if using MySQL for tests)
+- `TEST_DATABASE_URL`: SQLite in-memory database (default: `sqlite+aiosqlite:///:memory:`)
 - Application settings in [config/settings.py](config/settings.py) using Pydantic Settings
 
 ## Logging

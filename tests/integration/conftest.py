@@ -16,7 +16,7 @@ from config.settings import settings
 
 
 # 测试数据库 URL (使用内存 SQLite)
-TEST_DB_URL = settings.sqlite_test_database_url
+TEST_DB_URL = settings.test_database_url
 
 
 @pytest_asyncio.fixture(scope="function")
