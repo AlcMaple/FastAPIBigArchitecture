@@ -55,12 +55,12 @@ class LogerMiddleware:
         return True
 
     async def make_request_log_msg(self, request: Request) -> typing.Dict:
-        """简化的请求日志信息生成，避免消费流"""
+        """请求日志信息生成，避免消费流"""
         ip = request.client.host if request.client else "unknown"
         method = request.method
         url = request.url.path
 
-        # 简化的用户代理解析
+        # 用户代理解析
         user_agent_str = request.headers.get("user-agent", "")
         user_agent = None
         if self.is_record_useragent and user_agent_str:
@@ -121,7 +121,7 @@ class LogerMiddleware:
         return log_msg
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
-        """修复后的中间件调用方法，避免提前消费流"""
+        """中间件避免提前消费流"""
         if scope["type"] != "http":
             await self.app(scope, receive, send)
             return
