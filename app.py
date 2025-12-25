@@ -1,3 +1,4 @@
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
@@ -48,6 +49,12 @@ def setup_applications():
 
     # 创建所有应用（主应用 + 各模块子应用）
     main_app, module_apps = factory.create_all_apps(lifespan)
+
+    # 确保 static 目录存在
+    static_dir = "static"
+    if not os.path.exists(static_dir):
+        os.makedirs(static_dir, exist_ok=True)
+        logger.info(f"自动创建静态文件目录: {static_dir}")
 
     # 配置静态文件服务（仅主应用需要）
     main_app.mount("/static", StaticFiles(directory="static"), name="static")
