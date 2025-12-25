@@ -78,12 +78,22 @@ class BaseFactory(SQLAlchemyFactory[T], Generic[T]):
 class UserFactory(BaseFactory[User]):
     __model__ = User
 
-    name = Use(fake.name)
-    password = Use(lambda: "test_password_123")
+    name = Use(lambda: fake.bothify(text="user####"))
     # 模拟加密后的密码
     password_hash = Use(
         lambda: "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYqGfZJQv9u"
     )
+
+    @classmethod
+    def build_register_payload(
+        cls, password: str = "Test123456", **kwargs
+    ) -> dict[str, Any]:
+        """
+        构建注册接口专用的 payload
+        """
+        payload = cls.build_payload(exclude_fields={"password_hash"}, **kwargs)
+        payload["password"] = password
+        return payload
 
 
 class DesignUnitFactory(BaseFactory[DesignUnit]):
