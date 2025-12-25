@@ -19,9 +19,10 @@ from fastapi import APIRouter
 #     "router_doctor_module",  # doctor 模块完整路由（包含医生+预约，用于子应用）
 # ]
 
-from .base.api import router_simple
+from .base.api import router_simple, router_user
 
 router_simple_module = APIRouter()
 router_simple_module.include_router(router_simple)
+router_simple_module.include_router(router_user)
 
 __all__ = ["router_simple_module"]
