@@ -16,7 +16,7 @@ class AppFactory:
         """
         注册模块
 
-        :param name: 模块名称（用于URL路径，如 'doctor'）
+        :param name: 模块名称
         :param router: FastAPI Router 实例
         :param description: 模块描述（用于文档）
         """
@@ -98,8 +98,8 @@ class AppFactory:
         访问方式：
         - 主应用文档：http://localhost:8000/docs
         - 模块文档：http://localhost:8000/{module_name}/docs
-        - 主应用API：http://localhost:8000/api/v1/...
-        - 模块API：http://localhost:8000/{module_name}/api/v1/...
+        - 主应用API：http://localhost:8000/api/...
+        - 模块API：http://localhost:8000/{module_name}/api/...
 
         :param main_app: 主应用实例
         :param module_apps: 模块应用字典

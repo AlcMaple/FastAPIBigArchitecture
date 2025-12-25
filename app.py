@@ -44,11 +44,7 @@ def setup_applications():
 
     # 注册模块
     # 每个模块会生成独立的子应用，可通过 /{module_name}/docs 访问
-    # doctor 模块包含：医生信息路由分组 + 预约管理路由分组
     factory.register_module("simple", router_simple_module, "简单服务模块")
-
-    # 如果有其他模块（如 hospital），也在这里注册：
-    # factory.register_module("hospital", router_hospital_module, "医院管理模块")
 
     # 创建所有应用（主应用 + 各模块子应用）
     main_app, module_apps = factory.create_all_apps(lifespan)
@@ -59,10 +55,7 @@ def setup_applications():
     # 挂载模块子应用到主应用
     # 访问方式：
     # - 主应用文档（所有API）：http://localhost:8000/docs
-    # - doctor 子应用文档（医生+预约）：http://localhost:8000/doctor/docs
-    #   在 doctor 子应用中，API 按 tags 分组显示：
-    #     * 医生信息模块 (router_doctor)
-    #     * 预约管理模块 (router_appointment)
+    # - 子应用文档（医生+预约）：http://localhost:8000/{module_name}/docs
     factory.mount_module_apps(main_app, module_apps)
 
     return main_app
@@ -70,20 +63,3 @@ def setup_applications():
 
 # 创建应用实例
 app = setup_applications()
-
-# # 添加日志中间件
-# from middlewares.logger.middleware import LogerMiddleware
-# app.add_middleware(
-#     LogerMiddleware,
-#     is_record_useragent=True,
-#     is_record_headers=False,
-#     nesss_access_heads_keys=[],
-#     ignore_url=[
-#         "/favicon.ico",
-#         "/health",
-#         "/docs",
-#         "/redoc",
-#         "/openapi.json",
-#         "/static",
-#     ],
-# )

@@ -71,8 +71,8 @@ from exts.logururoute.business_logger import logger
 class FileCategory(str, Enum):
     """文件类别枚举"""
 
-    DOCTOR_DOCUMENT = "doctor_document"  # 医生文档
-    DOCTOR_AVATAR = "doctor_avatar"  # 医生头像
+    DOCUMENT = "document"  # 文档
+    AVATAR = "avatar"  # 头像
     OTHER = "other"  # 其他资料
 
 
@@ -89,19 +89,19 @@ class FileTypeConfig:
 
 # 文件类型配置映射
 FILE_TYPE_CONFIGS: Dict[FileCategory, FileTypeConfig] = {
-    FileCategory.DOCTOR_DOCUMENT: FileTypeConfig(
+    FileCategory.DOCUMENT: FileTypeConfig(
         allowed_mime_types=["application/pdf", "application/msword"],
         allowed_extensions=[".pdf", ".doc", ".docx"],
         max_size_mb=10,
-        upload_subdir="doctor_documents",
-        description="医生文档",
+        upload_subdir="documents",
+        description="文档",
     ),
-    FileCategory.DOCTOR_AVATAR: FileTypeConfig(
+    FileCategory.AVATAR: FileTypeConfig(
         allowed_mime_types=["image/jpeg", "image/png", "image/webp"],
         allowed_extensions=[".jpg", ".jpeg", ".png", ".webp"],
         max_size_mb=2,
-        upload_subdir="doctor_avatars",
-        description="医生头像",
+        upload_subdir="avatars",
+        description="头像",
     ),
     FileCategory.OTHER: FileTypeConfig(
         allowed_mime_types=["*/*"],
@@ -122,7 +122,7 @@ class FileUtils:
         获取上传目录
 
         Args:
-            file_category: 文件类别，默认为病害图片
+            file_category: 文件类别
 
         Returns:
             上传目录的完整路径
