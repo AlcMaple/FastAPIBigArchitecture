@@ -120,6 +120,7 @@ dmypy.json
 
 # static
 static/
+docs/
 
 # others
 .record.md

@@ -39,8 +39,6 @@ cp .env.example .env
 DATABASE_URL=mysql+aiomysql://用户名:密码@localhost:3306/arch_db
 ```
 
-> 注意：测试环境统一使用 SQLite 内存数据库，无需额外配置。
-
 ### 启动应用
 
 ```bash
@@ -51,89 +49,16 @@ python main.py
 
 - API 文档：[http://localhost:8000/docs](http://localhost:8000/docs)
 
-## 项目结构
-
-```
-FastAPIBigArchitecture/
-├── apis
-│   ├── doctor
-│   │   ├── api
-│   │   │   ├── __init__.py
-│   │   │   ├── appointment.py
-│   │   │   └── doctor.py
-│   │   ├── repository
-│   │   │   ├── appointment.py
-│   │   │   ├── doctor.py
-│   │   │   └── schedule.py
-│   │   ├── schemas
-│   │   │   ├── appointment.py
-│   │   │   ├── doctor.py
-│   │   │   └── schedule.py
-│   │   └── services
-│   │       ├── appointment.py
-│   │       ├── doctor.py
-│   │       └── schedule.py
-│   ├── hospital
-│   └── __init__.py
-├── config
-│   └── settings.py
-├── db
-│   ├── database.py
-│   ├── init_db.py
-│   └── models.py
-├── exts
-│   ├── exceptions
-│   │   └── handlers.py
-│   ├── logururoute
-│   │   ├── business_logger.py
-│   │   └── config.py
-│   ├── requestvar
-│   │   └── bing.py
-│   └── responses
-│       └── json_response.py
-├── middlewares
-│   └── logger
-│       └── middleware.py
-├── plugins
-├── testcase
-│   ├── test_integration
-│   │   ├── test_appointment_api.py
-│   │   └── test_doctor_api.py
-│   ├── test_unit
-│   │   ├── test_datetime.py
-│   │   └── test_file.py
-│   ├── conftest.py
-│   └── factories.py
-├── utils
-│   ├── datetime.py
-│   └── file.py
-├── wiki
-│   ├── Database.md
-│   ├── home.md
-│   ├── Logger.md
-│   └── Test.md
-├── .env.example
-├── .gitignore
-├── app_factory.py
-├── app.py
-├── CLAUDE.md
-├── main.py
-├── pytest.ini
-├── README.md
-└── requirements.txt
-```
-
 ## 架构设计
 
 ### 分层架构
 
-项目采用经典的五层架构模式：
+项目采用经典的四层架构模式：
 
 1. **API 层 (`api/`)** - 处理 HTTP 请求和响应
 
    - 路由定义和请求验证
    - 调用业务逻辑层
-   - 异常处理和响应格式化
 
 2. **业务逻辑层 (`services/`)** - 核心业务逻辑
 
@@ -152,11 +77,6 @@ FastAPIBigArchitecture/
    - 请求/响应模型定义
    - 数据验证规则
    - 序列化/反序列化
-
-5. **依赖注入层 (`dependencies/`)** - 依赖注入管理
-
-   - 依赖注入管理
-   - 依赖注入的配置
 
 ### 核心组件
 
@@ -178,27 +98,6 @@ FastAPIBigArchitecture/
 - **exceptions/**: 全局异常处理
 - **logururoute/**: 结构化日志配置
 
-#### 中间件 (`middlewares/`)
-
-- **loger/**: 请求/响应日志记录
-- 自动记录 API 调用信息
-- 支持忽略特定 URL
-
-## 数据库模型
-
-### 核心实体
-
-- **Doctor**: 医生信息（姓名、科室、职称、专长等）
-- **Schedule**: 医生排班（日期、时间段、最大接诊数）
-- **Appointment**: 预约记录（患者信息、预约时间、状态）
-- **Patient**: 患者信息（姓名、联系方式、病史等）
-
-### 关系设计
-
-- 医生 ↔ 排班：一对多关系
-- 医生 ↔ 预约：一对多关系
-- 患者 ↔ 预约：一对多关系
-
 ## 开发规范
 
 ### 模块组织
@@ -212,7 +111,6 @@ module_name/
 ├── services/         # 业务逻辑层
 ├── repository/       # 数据访问层
 ├── schemas/          # 数据模型层
-└── dependencies/     # 依赖注入
 ```
 
 exts/ 目录用于存放自定义扩展组件，如**全局**日志、请求上下文变量等。
@@ -230,19 +128,6 @@ plugs/ 目录用于存放插件扩展，如**自定义**插件、第三方插件
 - 依赖注入模式
 - 统一错误处理
 - RESTful API 设计
-
-## 开发命令
-
-```bash
-# 安装依赖
-pip install -r requirements.txt
-
-# 启动开发服务器
-python main.py
-
-# 查看 API 文档
-# 访问 http://localhost:8000/docs
-```
 
 ## 技术栈
 
