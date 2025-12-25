@@ -14,8 +14,8 @@ class UserRegisterRequest(BaseModel):
     @classmethod
     def validate_name(cls, v: str) -> str:
         """验证用户名格式"""
-        if not re.match(r"^[a-zA-Z0-9_\u4e00-\u9fa5]+$", v):
-            raise ValueError("用户名只能包含字母、数字、下划线和中文")
+        if not re.match(r"^[a-zA-Z0-9_]+$", v):
+            raise ValueError("用户名只能包含字母、数字、下划线")
         return v
 
     @field_validator("password")
