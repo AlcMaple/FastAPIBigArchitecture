@@ -65,6 +65,7 @@ from dataclasses import dataclass
 from enum import Enum
 from fastapi import UploadFile
 from typing import Optional, List, Dict
+import aiofiles
 from exts.logururoute.business_logger import logger
 
 
@@ -252,8 +253,8 @@ class FileUtils:
 
         # 保存文件
         try:
-            with open(file_path, "wb") as out_file:
-                out_file.write(content)
+            async with aiofiles.open(file_path, "wb") as out_file:
+                await out_file.write(content)
             logger.info(f"文件保存成功: {file_path}")
         except Exception as e:
             logger.error(f"文件保存失败: {str(e)}")
