@@ -3,13 +3,14 @@
 """
 
 from passlib.context import CryptContext
+from starlette.concurrency import run_in_threadpool
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
 
-def get_password_hash(password: str) -> str:
+async def get_password_hash(password: str) -> str:
     """
-    对密码进行哈希加密
+    对密码进行哈希加密（异步，CPU 密集型操作在线程池中执行）
 
     Args:
         password: 明文密码
@@ -17,12 +18,12 @@ def get_password_hash(password: str) -> str:
     Returns:
         str: 哈希加密后的密码
     """
-    return pwd_context.hash(password)
+    return await run_in_threadpool(pwd_context.hash, password)
 
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
+async def verify_password(plain_password: str, hashed_password: str) -> bool:
     """
-    验证密码是否正确
+    验证密码是否正确（异步，CPU 密集型操作在线程池中执行）
 
     Args:
         plain_password: 明文密码
@@ -31,4 +32,4 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     Returns:
         bool: 密码是否匹配
     """
-    return pwd_context.verify(plain_password, hashed_password)
+    return await run_in_threadpool(pwd_context.verify, plain_password, hashed_password)

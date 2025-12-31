@@ -26,7 +26,7 @@ class UserService:
 
         # 创建用户
         user_data = register_request.model_dump(exclude={"password"})
-        user_data["password_hash"] = get_password_hash(register_request.password)
+        user_data["password_hash"] = await get_password_hash(register_request.password)
         user_orm = await UserRepository.create_user(db_session, user_data)
 
         return UserInfoResponse.model_validate(user_orm)
@@ -40,7 +40,7 @@ class UserService:
         user_orm = await UserRepository.get_user_by_name(db_session, login_request.name)
 
         # 验证用户是否存在
-        if not user_orm or not verify_password(
+        if not user_orm or not await verify_password(
             login_request.password, user_orm.password_hash
         ):
             raise ApiException(ErrorCode.INVALID_CREDENTIALS, "用户名或密码错误")
