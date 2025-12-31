@@ -7,10 +7,11 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.encoders import jsonable_encoder
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError, DBAPIError
+from slowapi.errors import RateLimitExceeded
 
 from .api_exception import ApiException
 from .error_code import ErrorCode
-from exts.responses.api_response import Error
+from exts.responses.api_response import Error, ApiResponse
 from exts.logururoute.business_logger import logger
 
 
@@ -27,14 +28,18 @@ class GlobalExceptionHandler:
 
         处理优先级（从高到低）：
         1. ApiException - 业务异常（开发者主动抛出）
-        2. IntegrityError - 数据库完整性错误（唯一键、外键冲突等）
-        3. SQLAlchemyError - 数据库操作错误
-        4. RequestValidationError - Pydantic 参数校验异常
-        5. StarletteHTTPException - HTTP 异常
-        6. Exception - 所有未捕获的异常
+        2. RateLimitExceeded - 限流异常（slowapi）
+        3. IntegrityError - 数据库完整性错误（唯一键、外键冲突等）
+        4. SQLAlchemyError - 数据库操作错误
+        5. RequestValidationError - Pydantic 参数校验异常
+        6. StarletteHTTPException - HTTP 异常
+        7. Exception - 所有未捕获的异常
         """
         # 业务异常（最高优先级）
         app.add_exception_handler(ApiException, self.handle_api_exception)
+
+        # 限流异常
+        app.add_exception_handler(RateLimitExceeded, self.handle_rate_limit_error)
 
         # 数据库完整性异常（唯一键、外键冲突等）
         app.add_exception_handler(IntegrityError, self.handle_integrity_error)
@@ -64,6 +69,29 @@ class GlobalExceptionHandler:
             message=exc.message,
             data=exc.data,
             http_status=exc.http_status,
+        )
+
+    async def handle_rate_limit_error(
+        self, request: Request, exc: RateLimitExceeded
+    ) -> ApiResponse:
+        """
+        处理限流异常（RateLimitExceeded）
+        """
+        from slowapi.util import get_remote_address
+
+        client_ip = get_remote_address(request)
+
+        logger.warning(f"[RateLimitError] {request.method} {request.url}")
+        logger.warning(f"  Client IP: {client_ip}")
+        logger.warning(f"  Rate Limit: {exc.detail}")
+
+        error_code = ErrorCode.RATE_LIMIT_EXCEEDED.value
+        return ApiResponse(
+            success=False,
+            code=error_code[0],  # 4290
+            message=error_code[1],  # "请求过于频繁，请稍后再试"
+            data=None,
+            http_status=error_code[2],  # 429
         )
 
     async def handle_integrity_error(self, request: Request, exc: IntegrityError):

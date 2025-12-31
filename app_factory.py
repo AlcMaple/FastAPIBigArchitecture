@@ -1,6 +1,8 @@
 from typing import Dict, Tuple
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from config.settings import settings
 from exts.exceptions.exception_handler import GlobalExceptionHandler
@@ -11,6 +13,12 @@ class AppFactory:
 
     def __init__(self):
         self.modules = {}
+        # 每分钟 60 次请求
+        self.limiter = Limiter(
+            key_func=get_remote_address,
+            default_limits=["60/minute"],
+            storage_uri="memory://",
+        )
 
     def register_module(self, name: str, router, description: str):
         """
@@ -45,6 +53,9 @@ class AppFactory:
         # 配置异常处理
         self._setup_exception_handling(app)
 
+        # 配置限流
+        self._setup_rate_limit(app)
+
         # 包含模块路由
         app.include_router(module["router"])
 
@@ -69,6 +80,9 @@ class AppFactory:
 
         # 配置异常处理
         self._setup_exception_handling(app)
+
+        # 配置限流
+        self._setup_rate_limit(app)
 
         # 包含所有模块路由
         for module in self.modules.values():
@@ -121,6 +135,12 @@ class AppFactory:
         """配置全局异常处理"""
         exception_handler = GlobalExceptionHandler()
         exception_handler.init_app(app)
+
+    def _setup_rate_limit(self, app: FastAPI):
+        """
+        配置限流中间件
+        """
+        app.state.limiter = self.limiter
 
 
 # 全局工厂实例

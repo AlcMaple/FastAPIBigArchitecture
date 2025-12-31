@@ -15,6 +15,7 @@ trio==0.30.0
 python-multipart==0.0.20
 PyJWT==2.10.1
 argon2-cffi==25.1.0
+slowapi==0.1.9
 
 # Testing dependencies
 pytest==7.4.3
