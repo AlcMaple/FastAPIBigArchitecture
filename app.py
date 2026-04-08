@@ -24,11 +24,11 @@ async def lifespan(app: FastAPI):
     # 启动时的初始化代码
     logger.info("启动 fastapi arch")
 
-    # # 初始化数据库表
-    # try:
-    #     await init_database()
-    # except Exception as e:
-    #     logger.error(f"数据库初始化失败: {e}")
+    # 初始化数据库表
+    try:
+        await init_database()
+    except Exception as e:
+        logger.error(f"数据库初始化失败: {e}")
 
     yield
 
