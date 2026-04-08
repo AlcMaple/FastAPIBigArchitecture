@@ -2,234 +2,101 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project Overview
-
-FastAPI-based web framework using a layered architecture pattern. This is a Chinese-language medical appointment system (doctor/hospital/patient) that serves as a template for building FastAPI applications with clean architecture.
-
-## Development Commands
+## Commands
 
 ```bash
 # Install dependencies
 pip install -r requirements.txt
 
-# Start development server (with auto-reload)
+# Run the application (hot reload enabled)
 python main.py
-# App runs at http://localhost:8000
-# API docs at http://localhost:8000/docs
+# App available at http://localhost:8000, docs at http://localhost:8000/docs
 
 # Run all tests
 pytest
 
-# Run specific test file
-pytest tests/integration/api/test_design_unit.py
+# Run a single test file
+pytest tests/integration/api/test_user.py -v
 
-# Run specific test function
-pytest tests/integration/api/test_design_unit.py::test_create_design_unit_success
-
-# Run with verbose output
-pytest -v
-
-# Run tests matching pattern
-pytest -k "test_create"
+# Run tests matching a keyword
+pytest -k "test_register" -v
 ```
+
+## Environment Setup
+
+Copy `.env.example` to `.env` and set the database URL:
+```
+DATABASE_URL=mysql+aiomysql://username:password@localhost:3306/arch_db
+```
+
+Create the MySQL database first:
+```sql
+CREATE DATABASE arch_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+Tests use an in-memory SQLite database (`sqlite+aiosqlite:///:memory:`) — no MySQL needed for testing.
 
 ## Architecture
 
-### Five-Layer Pattern
+### Application Bootstrap
 
-Every functional module follows this structure:
+- `main.py` — entry point (uvicorn runner)
+- `app.py` — calls `AppFactory` to wire up all modules, mounts static files and sub-apps
+- `app_factory.py` — `AppFactory` class that creates and composes FastAPI apps; holds the global rate limiter (`60/minute` default)
 
-```
-apis/{module_name}/
-├── api/          # API layer - routes, request/response handling
-├── services/     # Business logic layer - core business rules
-├── repository/   # Data access layer - database operations
-├── schemas/      # Data models - Pydantic request/response models
-└── dependencies/ # Dependency injection (optional)
-```
+Each registered module gets its own sub-application with isolated docs at `/{module_name}/docs`.
 
-**Data Flow**: `API → Service → Repository → Database`
+### Module Structure
 
-### Key Directories
-
-- **apis/**: Feature modules (each with full 5-layer structure)
-- **db/**: Database configuration, models (SQLModel), initialization
-- **exts/**: Global extensions (exceptions, responses, logging, request context)
-- **middlewares/**: Request/response middleware (logger middleware)
-- **plugins/**: Custom plugins and third-party integrations
-- **config/**: Pydantic-based settings with `.env` support
-- **tests/**: Integration and unit tests
-- **utils/**: Utility functions and helper scripts
-
-### Application Factory Pattern
-
-The app uses a factory pattern ([app_factory.py](app_factory.py)) that:
-1. Registers modules with `app_factory.register_module(name, router, description)`
-2. Creates main app and module sub-apps via `create_all_apps(lifespan)`
-3. Mounts sub-apps at `/{module_name}` for modular API documentation
-
-Each module gets its own Swagger docs at `http://localhost:8000/{module_name}/docs`
-
-## Database
-
-### Configuration
-
-- ORM: SQLModel (built on SQLAlchemy 2.0)
-- Async driver: aiomysql for MySQL, aiosqlite for tests
-- Connection pooling configured in [config/settings.py](config/settings.py)
-- Two dependency injection functions:
-  - `depends_get_db_session`: Basic session
-  - `depends_get_db_session_with_transaction`: Auto-commit/rollback on success/error
-
-### Database Models
-
-Defined in [db/models.py](db/models.py) using SQLModel (combines Pydantic + SQLAlchemy).
-
-## Response Format
-
-All API responses use standardized format from [exts/responses/api_response.py](exts/responses/api_response.py):
-
-```python
-# Success response
-return Success(data=result, message="操作成功")
-
-# Returns:
-{
-  "success": true,
-  "code": 200,
-  "message": "操作成功",
-  "data": {...},
-  "timestamp": 1678886400000
-}
-```
-
-**Custom JSON encoder** handles datetime, Decimal, Pydantic models, SQLAlchemy models automatically.
-
-## Exception Handling
-
-Use `ApiException` from [exts/exceptions/api_exception.py](exts/exceptions/api_exception.py):
-
-```python
-from exts.exceptions.api_exception import ApiException
-from exts.exceptions.error_code import ErrorCode
-
-# Raise with default message
-raise ApiException(ErrorCode.NOT_FOUND)
-
-# Custom message
-raise ApiException(ErrorCode.NOT_FOUND, "医生不存在")
-
-# With additional data
-raise ApiException(ErrorCode.VALIDATION_ERROR, "数据验证失败", data={"field": "phone"})
-```
-
-Global exception handler (`GlobalExceptionHandler`) automatically converts exceptions to proper API responses.
-
-## Testing
-
-### Test Structure
+All business logic lives under `apis/`. Each module follows a strict four-layer pattern:
 
 ```
-tests/
-├── conftest.py              # Global fixtures (event loop)
-├── factories.py             # Polyfactory model factories
-├── integration/
-│   ├── conftest.py         # Integration test fixtures (db_session, client)
-│   ├── api/                # API endpoint tests
-│   └── repositories/       # Repository layer tests
-└── unit/
-    ├── conftest.py         # Unit test fixtures
-    ├── services/           # Service layer tests
-    └── utils/              # Utility tests
+apis/<module_name>/
+├── api/          # Route handlers — call services, return Success/Error
+├── services/     # Business logic — validate, orchestrate, call repositories
+├── repository/   # Database queries via SQLAlchemy async sessions
+├── schemas/      # Pydantic/SQLModel request & response models
 ```
 
-### Test Database
+Currently one module exists: `apis/base/` (registered as `"simple"`).
 
-- Uses SQLite in-memory database (`sqlite+aiosqlite:///:memory:`)
-- No configuration needed - works out of the box
-- Each test function gets fresh database (auto create/drop tables)
-- Fast, isolated, and automatically cleaned up
+To add a new module: create the directory tree above, register it in `app.py` with `factory.register_module(...)`.
 
-### Test Fixtures (Integration)
+### Key Extension Points (`exts/`)
 
-- `db_session`: Async database session with auto create/drop tables
-- `client`: AsyncClient with dependency overrides for testing
-- `clean_db`: Clears database data while preserving schema
+- **`exts/responses/api_response.py`** — `Success(data, message)` and `Error(code, message)` are the only response types used in route handlers. All responses share the envelope `{success, code, message, data, timestamp}`.
+- **`exts/exceptions/api_exception.py`** — raise `ApiException(ErrorCode.XXX)` for all error conditions; the global handler converts it to an `Error` response automatically.
+- **`exts/exceptions/error_code.py`** — `ErrorCode` enum defining all error codes (ranges: 1000–1999 param errors, 2000–2999 auth/authz, 3000–3999 business, 4000–4999 resource/external, 5000–5999 system).
+- **`exts/auth.py`** — `get_current_user_id` dependency; inject with `Depends(get_current_user_id)` in route handlers to require authentication.
 
-### Test Factories
+### Database (`db/`)
 
-Uses Polyfactory with custom async persistence ([tests/factories.py](tests/factories.py)):
+- `db/database.py` — two async session dependencies for injection:
+  - `depends_get_db_session` — plain session, manual commit needed
+  - `depends_get_db_session_with_transaction` — auto-commit on success, auto-rollback on exception
+- `db/models.py` — SQLModel table definitions
+- `db/init_db.py` — `init_database()` to create all tables (currently commented out in lifespan; run manually or uncomment)
 
-```python
-# Create test data
-user = await UserFactory.create_async(session=db_session, name="张三")
-```
+### Configuration (`config/settings.py`)
 
-### Test Utilities
+Pydantic `Settings` class reads from `.env`. Key settings: `DATABASE_URL`, `SECRET_KEY`, `ACCESS_TOKEN_EXPIRE_MINUTES`, `TEST_DATABASE_URL`.
 
-[tests/integration/api/utils.py](tests/integration/api/utils.py) provides:
-- `assert_api_success(response)`: Validates success response, returns data
-- `assert_api_failure(response, expected_code, match_msg, status_code)`: Validates error response
+### Rate Limiting
 
-### Parametrized Tests
+The `AppFactory` owns a single `slowapi` `Limiter`. Route handlers that need custom limits import it via `get_app_factory().limiter` and apply `@limiter.limit("N/minute")` alongside the `Request` parameter.
 
-Use `@pytest.mark.parametrize` for testing multiple scenarios:
+### Utils (`utils/`)
 
-```python
-@pytest.mark.parametrize(
-    "field, bad_value, expected_msg",
-    [
-        ("email", "not-an-email", "邮箱格式"),
-        ("tel", "123", "手机号格式"),
-    ],
-)
-@pytest.mark.asyncio
-async def test_validation(client, field, bad_value, expected_msg):
-    ...
-```
+- `utils/jwt.py` — JWT encode/decode
+- `utils/password.py` — argon2 password hashing (async-safe)
+- `utils/file.py` — async file I/O helpers
+- `utils/datetime.py` — date/time utilities
+- `utils/type.py` — type conversion helpers
 
-## Adding New Modules
+## Testing Conventions
 
-1. Create module directory: `apis/{module_name}/`
-2. Add subdirectories: `api/`, `services/`, `repository/`, `schemas/`
-3. Define routes in `api/` with APIRouter
-4. Register in [apis/__init__.py](apis/__init__.py):
-   ```python
-   from .{module_name}.api import router_{module_name}
-   router_{module_name}_module = APIRouter()
-   router_{module_name}_module.include_router(router_{module_name})
-   ```
-5. Register in [app.py](app.py):
-   ```python
-   factory.register_module("{module_name}", router_{module_name}_module, "模块描述")
-   ```
+Integration tests use `httpx.AsyncClient` with `ASGITransport` pointed at the main `app`. The `client` fixture in `tests/integration/conftest.py` overrides both DB session dependencies with a fresh in-memory SQLite session per test.
 
-## Code Style
+Unit tests live under `tests/unit/`; integration tests under `tests/integration/api/`.
 
-- **Type hints required**: All function signatures use Python type annotations
-- **Async/await**: All I/O operations are async
-- **Dependency injection**: Use FastAPI's `Depends()` for database sessions
-- **Chinese comments/messages**: Business logic comments and user-facing messages in Chinese
-- **Table naming**: Singular nouns (e.g., `user`, not `users`)
-
-## Configuration
-
-Environment variables loaded from `.env` file (see `.env.example`):
-- `DATABASE_URL`: MySQL connection string
-- `TEST_DATABASE_URL`: SQLite in-memory database (default: `sqlite+aiosqlite:///:memory:`)
-- Application settings in [config/settings.py](config/settings.py) using Pydantic Settings
-
-## Logging
-
-Uses Loguru ([exts/logururoute/](exts/logururoute/)):
-- Structured logging with business logger
-- Optional request/response logging middleware (commented in [app.py](app.py))
-- Logs stored in `logs/` directory
-
-## Important Patterns
-
-1. **Session Management**: Always use dependency injection for database sessions
-2. **Transaction Handling**: Use `depends_get_db_session_with_transaction` for write operations
-3. **Error Responses**: Raise `ApiException` rather than returning error responses
-4. **Schema Validation**: Use Pydantic models for request/response validation
-5. **Factory Pattern**: Test data creation via Polyfactory factories, not manual model instantiation
+Test factories are in `tests/factories.py` (built with `polyfactory` and `faker`).
