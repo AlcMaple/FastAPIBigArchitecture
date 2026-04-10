@@ -9,7 +9,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError, DBAPIError
 
-from exts.logururoute.business_logger import logger
+from exts.logger import logger
 
 
 def _error_response(status_code: int, message: str, data=None) -> JSONResponse:

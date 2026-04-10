@@ -7,8 +7,8 @@ from fastapi.staticfiles import StaticFiles
 from config.settings import settings
 from db.init_db import init_database
 from db.database import async_engine
-from exts.logururoute.business_logger import logger
-from exts.exceptions.exception_handler import GlobalExceptionHandler
+from exts.logger import logger
+from exts.exception import GlobalExceptionHandler
 
 from routers.example import router as example_router
 from routers.user import router as user_router

@@ -3,7 +3,7 @@ import asyncio
 
 from .database import async_engine
 from .models import *
-from exts.logururoute.business_logger import logger
+from exts.logger import logger
 
 
 async def create_tables():

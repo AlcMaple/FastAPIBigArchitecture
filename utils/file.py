@@ -66,7 +66,7 @@ from enum import Enum
 from fastapi import UploadFile
 from typing import Optional, List, Dict
 import aiofiles
-from exts.logururoute.business_logger import logger
+from exts.logger import logger
 
 
 class FileCategory(str, Enum):
