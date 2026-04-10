@@ -24,3 +24,4 @@
 - build(deps): 新增 qtawesome 依赖
 - chore: 忽略 macOS 系统文件
 - refactor: 重命名 base 为 example 示例
+- v2.0.0
