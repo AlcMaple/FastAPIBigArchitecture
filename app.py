@@ -1,30 +1,24 @@
 import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-# 导入配置
 from config.settings import settings
-
 from db.init_db import init_database
 from db.database import async_engine
 from exts.logururoute.business_logger import logger
+from exts.exceptions.exception_handler import GlobalExceptionHandler
 
-# 导入应用工厂
-from app_factory import get_app_factory
-
-# 导入模块路由
-from apis import router_simple_module
+from routers.example import router as example_router
+from routers.user import router as user_router
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """应用生命周期管理"""
-
-    # 启动时的初始化代码
     logger.info("启动 fastapi arch")
 
-    # 初始化数据库表
     try:
         await init_database()
     except Exception as e:
@@ -32,41 +26,42 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    # 关闭时的清理代码
     logger.info("关闭 fastapi arch")
-    # 关闭数据库连接池
     await async_engine.dispose()
     logger.info("关闭数据库连接")
 
 
-def setup_applications():
-    """设置应用配置"""
-    factory = get_app_factory()
+def create_app() -> FastAPI:
+    """创建 FastAPI 应用"""
+    app = FastAPI(
+        title=settings.app_name,
+        description="专为 AI 辅助编程、零配置的 FastAPI 脚手架",
+        version="2.0.0",
+        lifespan=lifespan,
+    )
 
-    # 注册模块
-    # 每个模块会生成独立的子应用，可通过 /{module_name}/docs 访问
-    factory.register_module("simple", router_simple_module, "简单服务模块")
+    # CORS
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
-    # 创建所有应用（主应用 + 各模块子应用）
-    main_app, module_apps = factory.create_all_apps(lifespan)
+    # 全局异常处理
+    GlobalExceptionHandler().init_app(app)
 
-    # 确保 static 目录存在
+    # 注册路由
+    app.include_router(example_router)
+    app.include_router(user_router)
+
+    # 静态文件
     static_dir = "static"
-    if not os.path.exists(static_dir):
-        os.makedirs(static_dir, exist_ok=True)
-        logger.info(f"自动创建静态文件目录: {static_dir}")
+    os.makedirs(static_dir, exist_ok=True)
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
-    # 配置静态文件服务（仅主应用需要）
-    main_app.mount("/static", StaticFiles(directory="static"), name="static")
-
-    # 挂载模块子应用到主应用
-    # 访问方式：
-    # - 主应用文档（所有API）：http://localhost:8000/docs
-    # - 子应用文档（医生+预约）：http://localhost:8000/{module_name}/docs
-    factory.mount_module_apps(main_app, module_apps)
-
-    return main_app
+    return app
 
 
-# 创建应用实例
-app = setup_applications()
+app = create_app()
