@@ -1,10 +1,18 @@
-# FastAPI Web 框架
+# FastAPI AI 时代脚手架
 
-基于 FastAPI 的个人服务项目框架，采用分层架构设计
+> **专为 AI 辅助编程、零配置的 FastAPI 脚手架**
 
-## 安装
+用户只需用自然语言与 AI 提需求，例如："在这个基础上，给我加个用户订单模块"。AI 能顺着已有基础设施直接完成功能，不用担心配置、环境和工程规范，只需专注于业务逻辑。
 
-[教程](https://github.com/AlcMaple/FastAPIBigArchitecture/wiki)，包含了从 0 到 1 的安装过程，以及安装完成后的使用教程
+## 解决了什么问题
+
+| 问题 | 解决方案 |
+|---|---|
+| 如何连数据库 | 预装全套异步 MySQL + SQLModel |
+| 事务怎么管 | `depends_get_db_session_with_transaction` 自动提交和回滚 |
+| 权限怎么做 | JWT + Argon2 密码哈希，拿来即用 |
+| 多环境配置 | Pydantic Settings + `.env` 方案 |
+| 响应格式统一 | `JsonRoute` 自动包装 `{success, code, data, timestamp}` |
 
 ## 快速开始
 
@@ -21,22 +29,13 @@ pip install -r requirements.txt
 
 ### 数据库配置
 
-1. 创建 MySQL 数据库：
-
 ```sql
 CREATE DATABASE arch_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-2. 复制环境配置文件：
-
 ```bash
 cp .env.example .env
-```
-
-3. 修改 `.env` 文件中的数据库连接信息：
-
-```bash
-DATABASE_URL=mysql+aiomysql://用户名:密码@localhost:3306/arch_db
+# 修改 .env 中的 DATABASE_URL
 ```
 
 ### 启动应用
@@ -45,103 +44,122 @@ DATABASE_URL=mysql+aiomysql://用户名:密码@localhost:3306/arch_db
 python main.py
 ```
 
-应用启动后访问：
+访问 API 文档：[http://localhost:8000/docs](http://localhost:8000/docs)
 
-- API 文档：[http://localhost:8000/docs](http://localhost:8000/docs)
+---
 
-## 架构设计
-
-### 分层架构
-
-项目采用经典的四层架构模式：
-
-1. **API 层 (`api/`)** - 处理 HTTP 请求和响应
-
-   - 路由定义和请求验证
-   - 调用业务逻辑层
-
-2. **业务逻辑层 (`services/`)** - 核心业务逻辑
-
-   - 业务规则实现
-   - 数据处理和验证
-   - 调用数据访问层
-
-3. **数据访问层 (`repository/`)** - 数据库操作
-
-   - 数据库查询和操作
-   - 数据映射和转换
-   - 事务管理
-
-4. **数据模型层 (`schemas/`)** - 数据传输对象
-
-   - 请求/响应模型定义
-   - 数据验证规则
-   - 序列化/反序列化
-
-### 核心组件
-
-#### 数据库 (`db/`)
-
-- **database.py**: 异步 MySQL 连接池配置
-- **models.py**: SQLModel 数据库表定义
-- **init_db.py**: 自动创建数据库表
-
-#### 配置管理 (`config/`)
-
-- **settings.py**: 基于 Pydantic 的配置类
-- 支持环境变量和 `.env` 文件
-- 数据库连接池配置
-
-#### 扩展组件 (`exts/`)
-
-- **responses/**: 统一的 Success/Fail 响应格式
-- **exceptions/**: 全局异常处理
-- **logururoute/**: 结构化日志配置
-
-## 开发规范
-
-### 模块组织
-
-每个功能模块遵循固定的目录结构：
+## 项目结构
 
 ```
-module_name/
-├── __init__.py        # 模块导出
-├── api/              # API 路由层
-├── services/         # 业务逻辑层
-├── repository/       # 数据访问层
-├── schemas/          # 数据模型层
+.
+├── app.py                  # 应用入口，注册路由和中间件
+├── main.py                 # uvicorn 启动入口
+├── routers/                # 业务路由（每个文件 = 一个完整模块）
+│   ├── example.py          # 设计单位模块：Schemas + 扁平 Router
+│   └── user.py             # 用户模块：Schemas + 扁平 Router
+├── db/
+│   ├── models.py           # SQLModel 数据库表定义
+│   ├── database.py         # 异步连接池 + 依赖注入
+│   └── init_db.py          # 自动建表
+├── exts/
+│   ├── route.py            # JsonRoute：自动包装统一响应格式
+│   ├── auth.py             # JWT 认证依赖注入
+│   ├── exceptions/
+│   │   └── exception_handler.py  # 全局异常处理
+│   └── logururoute/        # 结构化日志
+├── utils/
+│   ├── jwt.py              # JWT 工具函数
+│   ├── password.py         # Argon2 密码哈希
+│   └── type.py             # Pydantic 自定义类型
+├── config/
+│   └── settings.py         # Pydantic Settings 配置
+└── tests/
+    ├── test_example.py     # 设计单位黑盒集成测试
+    └── test_user.py        # 用户接口黑盒集成测试
 ```
 
-exts/ 目录用于存放自定义扩展组件，如**全局**日志、请求上下文变量等。
+## 如何新增一个业务模块
 
-plugs/ 目录用于存放插件扩展，如**自定义**插件、第三方插件等。
+AI 只需在 `routers/` 目录下新建一个文件，按以下结构编写：
 
-根目录开发规范：
+```python
+# routers/order.py
 
-- 可以添加自定义的一些相关模块，如 wxchatsdk（微信支付 SDK）
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from exts.route import JsonRoute
+from db.database import depends_get_db_session, depends_get_db_session_with_transaction
+from db.models import Order  # 在 db/models.py 中先定义好模型
 
-### 代码规范
+# ======================== Schemas ========================
+class OrderCreateRequest(BaseModel):
+    product: str
+    quantity: int
 
-- 使用 Python 类型注解
-- 异步编程模式（async/await）
-- 依赖注入模式
-- 统一错误处理
-- RESTful API 设计
+class OrderResponse(BaseModel):
+    id: int
+    product: str
+    quantity: int
+    model_config = {"from_attributes": True}
+
+# ======================== Router ========================
+router = APIRouter(prefix="/api", tags=["订单"], route_class=JsonRoute)
+
+@router.post("/order")
+async def create_order(
+    payload: OrderCreateRequest,
+    db: AsyncSession = Depends(depends_get_db_session_with_transaction),
+):
+    order = Order(**payload.model_dump())
+    db.add(order)
+    await db.flush()
+    await db.refresh(order)
+    return OrderResponse.model_validate(order)
+```
+
+然后在 `app.py` 中添加两行：
+```python
+from routers.order import router as order_router
+app.include_router(order_router)
+```
+
+## 响应格式
+
+所有接口统一返回标准格式（由 `JsonRoute` 自动包装）：
+
+**成功：**
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "操作成功",
+  "data": { ... },
+  "timestamp": 1678886400000
+}
+```
+
+**失败（直接 `raise HTTPException`）：**
+```json
+{
+  "success": false,
+  "code": 404,
+  "message": "资源不存在",
+  "data": null,
+  "timestamp": 1678886400000
+}
+```
 
 ## 技术栈
 
-- **Web 框架**: FastAPI
-- **数据库**: MySQL + SQLModel + SQLAlchemy
-- **异步驱动**: aiomysql
-- **配置管理**: Pydantic Settings
-- **日志记录**: Loguru
-- **API 文档**: Swagger UI / ReDoc
-- **类型检查**: Python Type Hints
-
-## 感谢
-
-- **书籍**: 钟远晓. _FASTAPI WEB 开发入门、进阶与实战_. 机械工业出版社, 2023. 本项目的框架基于该书的预约挂号系统实战部分进行了改写与完善
-- [Use singular nouns for database table names](https://www.teamten.com/lawrence/programming/use-singular-nouns-for-database-table-names.html)，数据库表名规范参考
-- [AzurLaneAutoScript](https://github.com/LmeSzinc/AzurLaneAutoScript)，参考其开发规范以及文档编写风格
-- [Git 分支规范](https://conventional-branch.github.io/zh/)，本项目的分支命名与管理遵循该规范
+| 组件 | 技术 |
+|---|---|
+| Web 框架 | FastAPI |
+| 数据库 | MySQL + SQLModel + SQLAlchemy (async) |
+| 异步驱动 | aiomysql |
+| 配置管理 | Pydantic Settings |
+| 日志 | Loguru |
+| 密码哈希 | Argon2 |
+| JWT | PyJWT |
+| 测试 | pytest + httpx |
