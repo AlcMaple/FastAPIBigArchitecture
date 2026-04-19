@@ -29,14 +29,32 @@ pip install -r requirements.txt
 
 ### 数据库配置
 
-```sql
-CREATE DATABASE arch_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
-
 ```bash
 cp .env.example .env
 # 修改 .env 中的 DATABASE_URL
 ```
+
+### 初始化数据库
+
+首次拉取代码或新环境部署时，运行一次：
+
+```bash
+python dev_tools/init_alembic.py
+```
+
+该脚本会自动完成：
+- 检测并创建 MySQL 数据库（无需手动执行 `CREATE DATABASE`）
+- 生成或应用 Alembic 迁移版本，建好所有数据表
+
+### 后续表结构变更
+
+修改 `db/models.py` 后，运行：
+
+```bash
+python dev_tools/migration_db.py
+```
+
+会生成迁移脚本并在人工确认后应用。详细操作见 [docs/数据库迁移操作手册.md](docs/数据库迁移操作手册.md)。
 
 ### 启动应用
 
@@ -59,8 +77,13 @@ python main.py
 │   └── user.py             # 用户模块：Schemas + 扁平 Router
 ├── db/
 │   ├── models.py           # SQLModel 数据库表定义
-│   ├── database.py         # 异步连接池 + 依赖注入
-│   └── init_db.py          # 自动建表
+│   └── database.py         # 异步连接池 + 依赖注入
+├── alembic/                # Alembic 迁移目录
+│   ├── env.py              # 迁移环境配置（已绑定 SQLModel.metadata）
+│   └── versions/           # 迁移版本脚本
+├── dev_tools/
+│   ├── init_alembic.py     # 首次初始化：建库 + 应用迁移
+│   └── migration_db.py     # 日常变更：生成并应用迁移（带人工审查）
 ├── exts/
 │   ├── route.py            # JsonRoute：自动包装统一响应格式
 │   ├── auth.py             # JWT 认证依赖注入
