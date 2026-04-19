@@ -30,7 +30,19 @@ def main():
     except subprocess.CalledProcessError as e:
         print(f"❌ 生成迁移版本失败: {e}")
         sys.exit(1)
-        
+
+    print("")
+    print("⚠️  请打开 alembic/versions/ 下最新生成的脚本进行人工检查：")
+    print("   - 列改名是否被误识别为 drop_column + add_column")
+    print("   - 类型变更是否带上 existing_type / existing_nullable")
+    print("   - 收窄类型 / 删列 前是否需要补数据清洗或备份 SQL")
+    print("   - downgrade() 是否写对，能否回滚")
+    print("")
+    confirm = input("检查/修改完成后输入 y 继续应用到数据库，其它任意键取消: ").strip().lower()
+    if confirm != "y":
+        print("🛑 已取消 upgrade。生成的脚本保留在 alembic/versions/，可手动编辑后再运行 `alembic upgrade head`。")
+        sys.exit(0)
+
     print("🔄 正在应用更新到数据库...")
     try:
         run_alembic(["upgrade", "head"])
