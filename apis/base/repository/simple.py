@@ -12,12 +12,12 @@ class SimpleRepository:
     @staticmethod
     async def create_unit(
         db_session: AsyncSession, unit_data: Dict[str, Any]
-    ) -> DesignUnit:
+    ) -> Dict[str, Any]:
         unit = DesignUnit(**unit_data)
         db_session.add(unit)
         await db_session.flush()
         await db_session.refresh(unit)
-        return unit
+        return unit.model_dump()
 
     @staticmethod
     async def check(db_session: AsyncSession, name: str) -> bool:
